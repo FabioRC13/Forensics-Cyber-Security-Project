@@ -1,9 +1,11 @@
 #!/usr/bin/python
+############################## Imports #########################################
 import Tkinter
 from Tkinter import *
 from tkFileDialog import *
 from PIL import Image,ImageTk
 
+############################# Functions ########################################
 def search_img():
 	name_img = askopenfilename()
 	print name_img
