@@ -2,7 +2,6 @@ from PIL import Image
 import six
 import binascii
 
-message = "string"
 
 #Create a new image
 img = Image.open('photo.png') 
@@ -10,8 +9,8 @@ img = Image.open('photo.png')
 #Create the pixel map
 pixels = img.load() 
 
- # Convert message converted into bits
-def convert_message_to_binnary(message):
+ # Convert message  into bits
+def convert_message_to_binary(message):
     result = []
     for c in message:
         bits = bin(ord(c))[2:]
@@ -26,9 +25,9 @@ def convert_message_to_binnary(message):
 
     return resaux
 
-#Convert a decimal number to binnary
+#Convert a decimal number to binary
 
-def convert_decimal_binnary(value):
+def convert_decimal_binary(value):
     if value == 0: return "0"
     s = ''
     while value:
@@ -54,19 +53,11 @@ def int_to_bytes(value):
 
 # Method to get the last bit
 
-def get_last_bit(binnarynumber):
+def get_last_bit(binarynumber):
 
-    index=0
-    binnarynumbersize = (len(binnarynumber))
-    lastbit = ''
-    while(index < binnarynumbersize-1):
-        index = index + 1
-   
-    lastbit = lastbit + lastbit.join(binnarynumber[index])
+   	lastbit = len(binarynumber)-1
 
-    return lastbit
-
-
+	return binarynumber[lastbit]
 
 #Replace the last bit of RGB for a bit of the encypted message
 
@@ -81,74 +72,123 @@ def replaceBit(messageConverted, bitposition):
         if  index != bitpositionsize-1:
             
            newbit = newbit + newbit.join(bitposition[index])
+
         else:
             
             newbit = newbit + newbit.join(messageConverted[0])
 
         index = index + 1
-
-    messageConverted = messageConverted[1:]
-    print newbit
+   
     return newbit
 
+# Hide the size of message in the first 10 pixels
+def hide_size(img, size):
+ 
+    for i in range(10):
+        for j in range(10):
+
+            if len(messageConverted) > 0:
+
+                rgbValue = pixels[i,j]
+                redValue = convert_decimal_binary(rgbValue[0])
+                greenValue = convert_decimal_binary(rgbValue[1])
+                blueValue = convert_decimal_binary(rgbValue[2])
+
+                if len(messageConverted) > 0:
+                	redValue = replaceBit(messageConverted, redValue) 
+                	messageConverted = update(messageConverted)
+
+                elif len(messageConverted) > 0:
+                	greenValue = replaceBit(messageConverted, greenValue) 
+                	messageConverted = update(messageConverted)
+
+                elif len(messageConverted) > 0:
+                	blueValue = replaceBit(messageConverted,  blueValue) 
+               		messageConverted = update(messageConverted)
+
+
+               	redValue = int(redValue,2)
+                greenValue = int(greenValue,2)
+                blueValue = int(blueValue,2)
+
+            	pixels[i, j] = (redValue, greenValue, blueValue)
 
 #Hide the message in the image
 
 def hide_message(img, message):
 
-    messageConverted = convert_message_to_binnary(message)
-    valueBinaryPosition = " "
+    messageConverted = convert_message_to_binary(message)
+    size = len(messageConverted)
 
-    for i in range(img.size[0]):
-        for j in range(img.size[1]):
+    binSize = convert_decimal_binary(size)
+
+
+    # We reserve the first 10*10 pixels to hide the message size
+    for i in range(10,img.size[0]):
+        for j in range(10,img.size[1]):
 
             if len(messageConverted) > 0:
-                rgbValue = img.getpixel((i,j))
-                redValue = convert_decimal_binnary(rgbValue[0])
-                greenValue = convert_decimal_binnary(rgbValue[1])
-                blueValue = convert_decimal_binnary(rgbValue[2])
-                replaceBit(messageConverted, redValue)
-                replaceBit(messageConverted, greenValue)
-                replaceBit(messageConverted,  blueValue)
-            
+
+                rgbValue = pixels[i,j]
+                redValue = convert_decimal_binary(rgbValue[0])
+                greenValue = convert_decimal_binary(rgbValue[1])
+                blueValue = convert_decimal_binary(rgbValue[2])
+
+                if len(messageConverted) > 0:
+                	redValue = replaceBit(messageConverted, redValue) 
+                	messageConverted = update(messageConverted)
+
+                elif len(messageConverted) > 0:
+                	greenValue = replaceBit(messageConverted, greenValue) 
+                	messageConverted = update(messageConverted)
+
+                elif len(messageConverted) > 0:
+                	blueValue = replaceBit(messageConverted,  blueValue) 
+               		messageConverted = update(messageConverted)
+
+
+               	redValue = int(redValue,2)
+                greenValue = int(greenValue,2)
+                blueValue = int(blueValue,2)
+
+            	pixels[i, j] = (redValue, greenValue, blueValue)
+
+
+#Update the converted message
+def update(messageConverted):
+
+	return messageConverted[1:]
 
 
 #Extract the message from the image
 
 def extract_message(img):
 
-    extracted_binnary_message = ''
+    extracted_binary_message = ''
 
-    for i in range(img.size[0]):
-        for j in range(img.size[1]):
+    # We reserve the first 10*10 pixels to hide the message size and search our message until hide size
+    for i in range(10,size):
+        for j in range(10,size):
 
-            rgbValue = img.getpixel((i,j))
-            redValue = convert_decimal_binnary(rgbValue[0])
-            greenValue = convert_decimal_binnary(rgbValue[1])
-            blueValue = convert_decimal_binnary(rgbValue[2])
-            extracted_binnary_message = get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
+            rgbValue = pixels[i,j]
+            redValue = convert_decimal_binary(rgbValue[0])
+            greenValue = convert_decimal_binary(rgbValue[1])
+            blueValue = convert_decimal_binary(rgbValue[2])
+            extracted_binary_message = get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
 
-    convert_bits_text(extracted_binnary_message)
-    return convert_bits_text
+    message = convert_bits_text(extracted_binary_message)
+
+    return message
 
 
     
-#hide_message(img, pixels, "Labyad")
-#extract_message(img)
-pix="A tua mae de 4"
-#replaceBit(pix, "01")
-#replaceBit(pix, "01")
+###### TESTES ########
+""" hide_message(img, "temos de ter uma mensagem enorme para poder realmente verificar se esta a aconntecer alguma coisa com a imagem. nao se pode ter uma frase ou duas :D")
 
-yolo = convert_message_to_binnary(pix)
-print len(yolo)
-
-ze = convert_bits_text(yolo)
-print ze
-#img.show()
+print extract_message(img)
 
 
-
-
+img.show() """ 
 
 
 
