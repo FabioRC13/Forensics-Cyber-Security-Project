@@ -81,37 +81,29 @@ def replaceBit(messageConverted, bitposition):
    
     return newbit
 
-# Hide the size of message in the first 10 pixels
-def hide_size(img, size):
- 
-    for i in range(10):
-        for j in range(10):
+# Hide the size of message in the first pixel
+def hide_size(message):
 
-            if len(messageConverted) > 0:
+    messagesize = len(message)
+    messagesizeinbits = convert_decimal_binary(messagesize)
 
-                rgbValue = pixels[i,j]
-                redValue = convert_decimal_binary(rgbValue[0])
-                greenValue = convert_decimal_binary(rgbValue[1])
-                blueValue = convert_decimal_binary(rgbValue[2])
-
-                if len(messageConverted) > 0:
-                	redValue = replaceBit(messageConverted, redValue) 
-                	messageConverted = update(messageConverted)
-
-                elif len(messageConverted) > 0:
-                	greenValue = replaceBit(messageConverted, greenValue) 
-                	messageConverted = update(messageConverted)
-
-                elif len(messageConverted) > 0:
-                	blueValue = replaceBit(messageConverted,  blueValue) 
-               		messageConverted = update(messageConverted)
+    rgbValue = pixels[0,0]
+    redValue = messagesizeinbits[0:7]
+    greenValue = messagesizeinbits[8:]
+    rgbValue[0] = redValue
+    rgbValue[1] = greenValue
 
 
-               	redValue = int(redValue,2)
-                greenValue = int(greenValue,2)
-                blueValue = int(blueValue,2)
 
-            	pixels[i, j] = (redValue, greenValue, blueValue)
+def get_hide_size(pixels):
+
+    rgbValue = pixels[0,0]
+    redValue = messagesizeinbits[0:7]
+    greenValue = messagesizeinbits[8:]
+    messageinbits = redValue + greenValue + ''
+    message = convert_bits_text(messageinbits)
+    messagesizeint = len(message)
+    return messagesizeint
 
 #Hide the message in the image
 
@@ -119,14 +111,15 @@ def hide_message(img, message):
 
     messageConverted = convert_message_to_binary(message)
     size = len(messageConverted)
-
     binSize = convert_decimal_binary(size)
 
+    hide_size(message)
 
-    # We reserve the first 10*10 pixels to hide the message size
-    for i in range(10,img.size[0]):
-        for j in range(10,img.size[1]):
+    i = 1
+    j = 2
 
+    for i in range(img.size[0]):
+        for j in range(img.size[1]):
             if len(messageConverted) > 0:
 
                 rgbValue = pixels[i,j]
@@ -159,36 +152,44 @@ def update(messageConverted):
 
 	return messageConverted[1:]
 
-
 #Extract the message from the image
-
 def extract_message(img):
 
+    pixels = img.load() 
+
+    messagesize = get_hide_size(pixels)
     extracted_binary_message = ''
 
-    # We reserve the first 10*10 pixels to hide the message size and search our message until hide size
-    for i in range(10,size):
-        for j in range(10,size):
+    i = 1
+    j = 2
+
+    end = false
+    for i in range(img.size[0]):
+        for j in range(img.size[1]):
 
             rgbValue = pixels[i,j]
             redValue = convert_decimal_binary(rgbValue[0])
             greenValue = convert_decimal_binary(rgbValue[1])
             blueValue = convert_decimal_binary(rgbValue[2])
             extracted_binary_message = get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
+            if len(extracted_binary_message) == messagesize:
+                end = true
+                break
+        if end:
+            break
 
     message = convert_bits_text(extracted_binary_message)
 
     return message
-
-
     
 ###### TESTES ########
-""" hide_message(img, "temos de ter uma mensagem enorme para poder realmente verificar se esta a aconntecer alguma coisa com a imagem. nao se pode ter uma frase ou duas :D")
+hide_message(img, "temos de ter uma mensagem enorme para poder realmente verificar se esta a aconntecer alguma coisa com a imagem. nao se pode ter uma frase ou duas :D")
 
 print extract_message(img)
 
-
-img.show() """ 
+#tamanho = "temos de ter uma mensagem enorme para poder realmente verificar se esta a aconntecer alguma coisa com a imagem. nao se pode ter uma frase ou duas :D"
+#print get_hide_size("101010101011101")
+#img.show()
 
 
 
