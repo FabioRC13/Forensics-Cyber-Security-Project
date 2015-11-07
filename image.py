@@ -3,6 +3,7 @@ import six
 import binascii
 
 
+
 #Create a new image
 img = Image.open('photo.png') 
 
@@ -85,25 +86,46 @@ def replaceBit(messageConverted, bitposition):
 def hide_size(message):
 
     messagesize = len(message)
+    global messagesizeinbits
     messagesizeinbits = convert_decimal_binary(messagesize)
 
     rgbValue = pixels[0,0]
-    redValue = messagesizeinbits[0:7]
-    greenValue = messagesizeinbits[8:]
-    rgbValue[0] = redValue
-    rgbValue[1] = greenValue
+    """Um tupulo e um tipo imutaveis por isso tem de ser convertido numa lista por forma a ser manipulado"""
 
+    rgbValue = list(rgbValue)
+
+    blueValue = messagesizeinbits[0:8]
+    greenValue = messagesizeinbits[8:16]
+    redValue = messagesizeinbits[16:24]
+
+
+    rgbValue[2] = int(blueValue, 2)
+
+    if greenValue != '':
+        rgbValue[1] = int(greenValue, 2)
+    else:
+        rgbValue[1] = 0
+
+    if redValue != '':
+        rgbValue[0] = int(redValue, 2)
+    else:
+        rgbValue[0] = 0
+
+    rgbValue = tuple(rgbValue)
+    pixels[0,0] = rgbValue
 
 
 def get_hide_size(pixels):
 
     rgbValue = pixels[0,0]
-    redValue = messagesizeinbits[0:7]
-    greenValue = messagesizeinbits[8:]
-    messageinbits = redValue + greenValue + ''
-    message = convert_bits_text(messageinbits)
-    messagesizeint = len(message)
-    return messagesizeint
+
+    redValue = convert_decimal_binary(rgbValue[0])
+    greenValue = convert_decimal_binary(rgbValue[1])
+    blueValue = convert_decimal_binary(rgbValue[2])
+
+    sizeBits = redValue + greenValue + blueValue + ''
+    sizeInt = int(sizeBits, 2)
+    return sizeInt
 
 #Hide the message in the image
 
@@ -163,7 +185,7 @@ def extract_message(img):
     i = 1
     j = 2
 
-    end = false
+    end = False
     for i in range(img.size[0]):
         for j in range(img.size[1]):
 
@@ -173,7 +195,7 @@ def extract_message(img):
             blueValue = convert_decimal_binary(rgbValue[2])
             extracted_binary_message = get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
             if len(extracted_binary_message) == messagesize:
-                end = true
+                end = True
                 break
         if end:
             break
