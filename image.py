@@ -5,26 +5,19 @@ import binascii
 
 
 #Create a new image
-img = Image.open('photo.png') 
+img = Image.open('Lenna.jpg')
 
 #Create the pixel map
 pixels = img.load() 
 
  # Convert message  into bits
 def convert_message_to_binary(message):
-    result = []
+    result = ''
     for c in message:
         bits = bin(ord(c))[2:]
         bits = '00000000'[len(bits):] + bits
-        result.extend([int(b) for b in bits])
-
-    resaux = ''
-
-    for c in result:
-    	caux = str(c)
-    	resaux  = resaux + caux + ''
-
-    return resaux
+        result = result + bits
+    return result
 
 #Convert a decimal number to binary
 
@@ -42,8 +35,11 @@ def convert_decimal_binary(value):
 #Convert bits to text
 
 def convert_bits_text(bits, encoding='utf-8', errors='surrogatepass'):
-    n = int(bits, 2)
-    return int_to_bytes(n).decode(encoding, errors)
+    chars = []
+    for b in range(len(bits) / 8):
+        byte = bits[b*8:(b+1)*8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
 
 #Auxiliar method of the method convert_bits_text
 
@@ -132,41 +128,49 @@ def get_hide_size(pixels):
 def hide_message(img, message):
 
     messageConverted = convert_message_to_binary(message)
+    #print message
+    print messageConverted
     size = len(messageConverted)
-    binSize = convert_decimal_binary(size)
 
     hide_size(message)
 
-    i = 1
-    j = 2
-
     for i in range(img.size[0]):
         for j in range(img.size[1]):
+
+            if i == 0 and j == 0:
+                continue
+
             if len(messageConverted) > 0:
 
                 rgbValue = pixels[i,j]
+                #print messageConverted
                 redValue = convert_decimal_binary(rgbValue[0])
                 greenValue = convert_decimal_binary(rgbValue[1])
                 blueValue = convert_decimal_binary(rgbValue[2])
+
+                #print pixels[i,j], redValue, greenValue, blueValue
 
                 if len(messageConverted) > 0:
                 	redValue = replaceBit(messageConverted, redValue) 
                 	messageConverted = update(messageConverted)
 
-                elif len(messageConverted) > 0:
+                if len(messageConverted) > 0:
                 	greenValue = replaceBit(messageConverted, greenValue) 
                 	messageConverted = update(messageConverted)
 
-                elif len(messageConverted) > 0:
+                if len(messageConverted) > 0:
                 	blueValue = replaceBit(messageConverted,  blueValue) 
                		messageConverted = update(messageConverted)
 
-
+                #print "(",int(redValue,2),",", int(greenValue,2), ",",int(blueValue,2), ")",  redValue, greenValue, blueValue
                	redValue = int(redValue,2)
                 greenValue = int(greenValue,2)
                 blueValue = int(blueValue,2)
 
             	pixels[i, j] = (redValue, greenValue, blueValue)
+
+
+                #print "==========================="
 
 
 #Update the converted message
@@ -181,20 +185,22 @@ def extract_message(img):
 
     messagesize = get_hide_size(pixels)
     extracted_binary_message = ''
-
-    i = 1
-    j = 2
+   # print messagesize
 
     end = False
     for i in range(img.size[0]):
         for j in range(img.size[1]):
 
+            if i == 0 and j == 0:
+                continue
+
             rgbValue = pixels[i,j]
             redValue = convert_decimal_binary(rgbValue[0])
             greenValue = convert_decimal_binary(rgbValue[1])
             blueValue = convert_decimal_binary(rgbValue[2])
-            extracted_binary_message = get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
-            if len(extracted_binary_message) == messagesize:
+            extracted_binary_message = extracted_binary_message + get_last_bit(redValue) + get_last_bit(greenValue) + get_last_bit(blueValue)
+            #print extracted_binary_message
+            if len(extracted_binary_message) > messagesize*8:
                 end = True
                 break
         if end:
