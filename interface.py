@@ -27,6 +27,7 @@ def onOpen():
     fn = filename
     #print fn #prints filename with path here
     img = Image.open(fn)
+    LSB.set_image(img)
     setImage(img)
 
 def onSaveAs():

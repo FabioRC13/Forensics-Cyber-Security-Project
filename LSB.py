@@ -5,10 +5,18 @@ import binascii
 
 
 # Create a new image
-img = Image.open('Lenna.jpg')
+#img = Image.open('Lenna.jpg')
+img = None
+pixels = None
+
+def set_image(imge):
+    global img
+    global pixels
+    img = imge
+    pixels = img.load()
 
 # Create the pixel map
-pixels = img.load()
+#pixels = img.load()
 
 # Convert message  into bits
 def convert_message_to_binary(message):
