@@ -93,17 +93,24 @@ def hide_size(message):
     messagesize = len(message)
     global messagesizeinbits
     messagesizeinbits = convert_decimal_binary(messagesize)
+    print messagesizeinbits
 
     rgbValue = pixels[0, 0]
     """Um tupulo e um tipo imutaveis por isso tem de ser convertido numa lista por forma a ser manipulado"""
 
     rgbValue = list(rgbValue)
 
-    blueValue = messagesizeinbits[0:8]
-    greenValue = messagesizeinbits[8:16]
-    redValue = messagesizeinbits[16:24]
+    blueValue = messagesizeinbits[-8:]
+    print "blueValue " + str(blueValue)
+    greenValue = messagesizeinbits[-16:-8]
+    print "greenValue " + str(greenValue)
+    redValue = messagesizeinbits[-24:-16]
+    print "redValue " + str(redValue)
 
-    rgbValue[2] = int(blueValue, 2)
+    if blueValue != '':
+        rgbValue[2] = int(blueValue, 2)
+    else:
+        rgbValue[2] = 0
 
     if greenValue != '':
         rgbValue[1] = int(greenValue, 2)
@@ -116,17 +123,26 @@ def hide_size(message):
         rgbValue[0] = 0
 
     rgbValue = tuple(rgbValue)
+    print rgbValue
     pixels[0, 0] = rgbValue
 
 
 def get_hide_size(pixels):
     rgbValue = pixels[0, 0]
+    print "======Extract porcess======="
+    print rgbValue
 
-    redValue = convert_decimal_binary(rgbValue[0])
-    greenValue = convert_decimal_binary(rgbValue[1])
-    blueValue = convert_decimal_binary(rgbValue[2])
 
-    sizeBits = redValue + greenValue + blueValue + ''
+    redValue = '%08d' % int(convert_decimal_binary(rgbValue[0]))
+    print "R " + str(redValue)
+    greenValue = '%08d' % int(convert_decimal_binary(rgbValue[1]))
+    print "G " + str(greenValue)
+    blueValue = '%08d' % int(convert_decimal_binary(rgbValue[2]))
+    print "B " + str(blueValue)
+
+    #sizeBits = blueValue + greenValue + redValue + ''
+    sizeBits = str(redValue) + str(greenValue) + str(blueValue) + ''
+    print sizeBits
     sizeInt = int(sizeBits, 2)
     return sizeInt
 
@@ -135,10 +151,10 @@ def get_hide_size(pixels):
 
 def hide_message(img, message):
     messageConverted = convert_message_to_binary(message)
-    #print message
+    print message
     #print messageConverted
     size = len(messageConverted)
-    #print size
+    print str(size) + " bits\n"
     #print "======================"
 
     hide_size(message)
@@ -193,7 +209,7 @@ def extract_message(img):
 
     messagesize = get_hide_size(pixels)
     extracted_binary_message = ''
-    #print messagesize
+    print "size of message = " + str(messagesize) + " bits"
 
     end = False
     for i in range(img.size[0]):

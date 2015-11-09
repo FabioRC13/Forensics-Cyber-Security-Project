@@ -80,6 +80,7 @@ def hide_procedure():
 def extract_message():
     global current_full_size_image
     message = LSB.extract_message(current_full_size_image)
+    print message
     dialog_box(message)
 
     ############################## Interface Code ################################
