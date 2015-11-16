@@ -40,7 +40,7 @@ def onSaveAs():
     fileName = tkFileDialog.asksaveasfile(parent=master,filetypes=ftypes ,title="Save the image as...", mode='w',defaultextension='.jpg')
     global current_full_size_image
     print fileName.name
-    current_full_size_image.save(fileName.name, quality=100)
+    current_full_size_image.save(fileName.name)
 
 
 
