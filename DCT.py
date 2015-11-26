@@ -13,7 +13,15 @@ import struct
 
 
 def open_image():
-    image = Image.open("LennaS.jpg")
+    image = Image.open("LennaS.jpg").convert('RGB')
+    image.save("original.png")
+    r, g, b = image.split()
+    r.save("imgR.png")
+    b.save("imgB.png")
+    g.save("imgG.png")
+    out = Image.merge("RGB", (r, g, b))
+    out.save("merged.png")
+    #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
     img_grey = image.convert('L')
     img = numpy.array(img_grey, dtype=numpy.float)
@@ -40,11 +48,14 @@ print pixels
 dct_size = pixels.shape[0]
 dct = get_2D_dct(pixels)
 print dct
-print type(dct[0][0])
-print dct[0][4]
 
+#Para entender o que e um coeficiente DCT
+print type(dct[0][0])
+#converte para binario (mas apenas mostra 32bits, e o tipo supostamente e  'numpy.float64')
 print ''.join(bin(ord(c)).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', dct[0][0]))
-reconstructed_images = []
+#for i in range (0, dct_size):
+    #dct[i][i] = 0
+
 print dct_size
 # Reconstructed image
 idct = get_2d_idct(dct)
