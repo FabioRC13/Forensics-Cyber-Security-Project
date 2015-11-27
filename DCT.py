@@ -68,7 +68,40 @@ def convert_float64_int(dct):
 #converte o inteiro num float64
 def convert_int_float64(inteiro):
     return inteiro.astype(numpy.float64)
-    
+
+def float_to_bin(f):
+    """ convert float to binary string """
+    ba = struct.pack('>d', f)
+    s = ''.join('{:08b}'.format(ord(b)) for b in ba)
+    # strip off leading zeros
+    for i in range(len(s)):
+        if s[i] != '0':
+            break
+    else:  # all zeros
+        s = '0'
+        i = 0
+    return s[i:]
+
+def int_to_bytes(n, minlen=0):  # helper function
+    """ int/long to byte string """
+    nbits = n.bit_length() + (1 if n < 0 else 0)  # plus one for any sign bit
+    nbytes = (nbits+7)/8  # number of whole bytes
+    bytes = []
+    for i in range(nbytes):
+        bytes.append(chr(n & 0xff))
+        n >>= 8
+    # zero pad if needed
+    if minlen > 0 and len(bytes) < minlen:
+        bytes.extend((minlen-len(bytes)) * '0')
+    bytes.reverse()  # put high bytes at beginning
+    return ''.join(bytes)
+
+def bin_to_float(b):
+    """ convert binary string to float """
+    bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64
+    return struct.unpack('>d', bf)[0]
+
+
 #message_bits = convert_message_to_binary(message)
 
 pixels = open_image()
@@ -80,7 +113,15 @@ print dct
 #Para entender o que e um coeficiente DCT
 #print type(dct[0][0])
 
+print "========"
+print dct[0][0]
+bin = float_to_bin(dct[0][0])
+print bin
+print bin_to_float(bin)
+
 coefbin = convert_decimal_binary(convert_float64_int(dct[0][0]))
+
+
 
 
 
