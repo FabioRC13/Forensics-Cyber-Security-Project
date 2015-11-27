@@ -57,7 +57,7 @@ def get_reconstructed_image(raw):
     img = Image.fromarray(img)
     return img
 
-def replace_last_bit(binary_coef_number, binnary_number):
+def replace_last_bit(binary_coef_number, binary_number):
     return binary_coef_number[:-1] + binary_number
     
 
@@ -94,7 +94,5 @@ coefbin = convert_decimal_binary(convert_float64_int(dct[0][0]))
 idct = get_2d_idct(dct)
 reconstructed_image = get_reconstructed_image(idct)
 reconstructed_image.save("img.png")
-
-print replace_last_bit("yolo", "cona")
 
 print numpy.array(reconstructed_image, dtype=numpy.float)
