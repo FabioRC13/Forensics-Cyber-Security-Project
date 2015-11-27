@@ -57,6 +57,10 @@ def get_reconstructed_image(raw):
     img = Image.fromarray(img)
     return img
 
+def replace_last_bit(binary_coef_number, binnary_number):
+    return binary_coef_number[:-1] + binary_number
+    
+
 #converte o float64 num inteiro 
 def convert_float64_int(dct):
    return dct.astype(numpy.int64)
@@ -76,13 +80,10 @@ print dct
 #Para entender o que e um coeficiente DCT
 #print type(dct[0][0])
 
-res = convert_float64_int(dct[0][0])
+coefbin = convert_decimal_binary(convert_float64_int(dct[0][0]))
 
-print res
 
-print convert_int_float64(res)
 
-print res == convert_int_float64(res)
 #converte para binario (mas apenas mostra 32bits, e o tipo supostamente e  'numpy.float64')
 #print ''.join(bin(ord(c)).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', dct[0][0]))
 #for i in range (0, dct_size):
@@ -94,5 +95,6 @@ idct = get_2d_idct(dct)
 reconstructed_image = get_reconstructed_image(idct)
 reconstructed_image.save("img.png")
 
+print replace_last_bit("yolo", "cona")
 
 print numpy.array(reconstructed_image, dtype=numpy.float)
