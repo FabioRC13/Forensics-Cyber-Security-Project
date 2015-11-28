@@ -109,11 +109,17 @@ def convert_message_to_binary(message):
     return result
 
 
-def message_sliced(message_size_bin_padd_list):
+def message_size_bin_padd_sliced(message_size_bin_padd_list):
     
     message_aux = message_size_bin_padd_list[0:3]
     message_list = message_size_bin_padd_list[3:]
-    print message_aux
+    return message_aux
+
+def message_sliced(message):
+
+    message_bin_list = list(convert_message_to_binary(message))
+    message_aux = message_bin_list[0:3]
+    message_bin_list = message_bin_list[3:]
     return message_aux
 
 def hide_message(pixels, message):
@@ -134,7 +140,7 @@ def hide_message(pixels, message):
     #adicionar o padding
     message_size_bin_padd = add_padding(message_size_bin)
     message_size_bin_padd_list = list(message_size_bin_padd)
-   
+    
     size = imgR.shape()
     line_size = size[0]
     column_size = size[0]
@@ -146,13 +152,25 @@ def hide_message(pixels, message):
                 binImgR = float_to_bin(dctRed[i][j]) 
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctRed[i][j])
-                dctRed[i][j] = bin_to_float(binImgR[:-3]+message_sliced(message_size_bin_padd))
-                dctRed[i][j] = bin_to_float(binImgG[:-3]+message_sliced(message_size_bin_padd))
-                dctRed[i][j] = bin_to_float(binImgB[:-3]+message_sliced(message_size_bin_padd))
+                dctRed[i][j] = bin_to_float(binImgR[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
+                dctRed[i][j] = bin_to_float(binImgG[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
+                dctRed[i][j] = bin_to_float(binImgB[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
             
             else:
+                last_i = i
+                last_j = j
                 break
 
+
+    for last_i in line_size:
+        for last_i in column_size:
+
+            binImgR = float_to_bin(dctRed[i][j]) 
+            binImgG = float_to_bin(dctGreen[i][j])
+            binImgB = float_to_bin(dctRed[i][j])
+            dctRed[i][j] = bin_to_float(binImgR[:-3]+message_sliced(message))
+            dctRed[i][j] = bin_to_float(binImgG[:-3]+message_sliced(message))
+            dctRed[i][j] = bin_to_float(binImgB[:-3]+message_sliced(message))
 
 
 
