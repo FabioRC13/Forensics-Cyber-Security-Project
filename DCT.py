@@ -162,7 +162,7 @@ def hide_message(pixels, message):
                 dctBlue[i][j] = bin_to_float(binImgB[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
                 i+=1
                 j+=1
-                           else:
+            else:
                 last_i = i
                 last_j = j
                 break
