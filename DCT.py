@@ -143,8 +143,8 @@ def hide_message(pixels, message):
 
 
     size = imgR.shape[0]
-    line_size = size
-    column_size = size
+    line_size = size - 1
+    column_size = size - 1
     i=0
     j=0
     last_i = i
@@ -158,11 +158,11 @@ def hide_message(pixels, message):
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctRed[i][j])
                 dctRed[i][j] = bin_to_float(binImgR[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
-                dctRed[i][j] = bin_to_float(binImgG[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
-                dctRed[i][j] = bin_to_float(binImgB[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
+                dctGreen[i][j] = bin_to_float(binImgG[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
+                dctBlue[i][j] = bin_to_float(binImgB[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
                 i+=1
                 j+=1
-            else:
+                           else:
                 last_i = i
                 last_j = j
                 break
@@ -175,10 +175,12 @@ def hide_message(pixels, message):
             binImgG = float_to_bin(dctGreen[last_i][last_j])
             binImgB = float_to_bin(dctRed[last_i][last_j])
             dctRed[last_i][last_j] = bin_to_float(binImgR[:-3]+message_sliced(message))
-            dctRed[last_i][last_j] = bin_to_float(binImgG[:-3]+message_sliced(message))
-            dctRed[last_i][last_j] = bin_to_float(binImgB[:-3]+message_sliced(message))
+            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-3]+message_sliced(message))
+            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-3]+message_sliced(message))
             last_i+=1
             last_j+=1
+
+
 ##########################falta fazer o merge das 3 imagens ################ 
 
 pixels = open_image()
