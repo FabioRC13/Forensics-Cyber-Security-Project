@@ -7,11 +7,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy import fftpack
 import urllib2
-#import IPython
 import struct
-
-message = "Bailando"
-
 
 #Convert a decimal number to binary
 def convert_decimal_binary(value):
@@ -27,19 +23,15 @@ def convert_decimal_binary(value):
 
 
 def open_image():
-    image = Image.open("LennaS.jpg").convert('RGB')
-    image.save("original.png")
-    r, g, b = image.split()
-    r.save("imgR.png")
-    b.save("imgB.png")
-    g.save("imgG.png")
-    out = Image.merge("RGB", (r, g, b))
-    out.save("merged.png")
+    image = Image.open("original.png").convert('RGB')
+    return image
+
+    
+   # out = Image.merge("RGB", (r, g, b))
+    #out.save("merged.png")
     #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
-    img_grey = image.convert('L')
-    img = numpy.array(img_grey, dtype=numpy.float)
-    return img
+ 
 
 def get_2D_dct(img):
     """ Get 2D Cosine Transform of Image
@@ -101,25 +93,51 @@ def bin_to_float(b):
     bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64
     return struct.unpack('>d', bf)[0]
 
+def add_padding(message_size_bin):
 
-#message_bits = convert_message_to_binary(message)
+    while len(message_size_bin) < 32:
+        message_size_bin = "0" + message_size_bin
+    return message_size_bin
 
-pixels = open_image()
-print pixels
-dct_size = pixels.shape[0]
-dct = get_2D_dct(pixels)
-print dct
 
-#Para entender o que e um coeficiente DCT
-#print type(dct[0][0])
+def hide_message(pixels, message):
 
-print "========"
-print dct[0][0]
-bin = float_to_bin(dct[0][0])
-print bin
-print bin_to_float(bin)
+    message_size_bin = convert_decimal_binary(len(message))
 
-coefbin = convert_decimal_binary(convert_float64_int(dct[0][0]))
+    r, g, b = pixels.split()
+
+    imgR = numpy.array(r, dtype=numpy.float)
+    imgG = numpy.array(g, dtype=numpy.float)
+    imgB = numpy.array(b, dtype=numpy.float)
+
+    #Conversao dos DCT
+    dctRed = get_2D_dct(imgR)
+    dctGreen = get_2D_dct(imgG)
+    dctBlue = get_2D_dct(imgB)
+
+    #guardar o tamanho da messagem
+    add_padding(message_size_bin)
+
+    size = imgR.shape()
+    line_size = size[0]
+    column_size = size[1]
+
+    for i in line_size:
+        for j in column_size:
+            binImgR = float_to_bin(dctRed[i][j]) 
+            binImgG = float_to_bin(dctGreen[i][j])
+            binImgB = float_to_bin(dctRed[i][j])
+            dctRed[i][j] = bin_to_float(binImgR[:-3]+"Pedaco a acrescentar")
+            dctRed[i][j] = bin_to_float(binImgG[:-3]+"Pedaco a acrescentar")
+            dctRed[i][j] = bin_to_float(binImgB[:-3]+"Pedaco a acrescentar")
+
+
+#pixels = open_image()
+#print pixels
+#hide_message(pixels, "efef")
+#dct_size = pixels.shape[0]
+#dct = get_2D_dct(pixels)
+#print dct
 
 
 
@@ -132,8 +150,8 @@ coefbin = convert_decimal_binary(convert_float64_int(dct[0][0]))
 
 #print dct_size
 # Reconstructed image
-idct = get_2d_idct(dct)
-reconstructed_image = get_reconstructed_image(idct)
-reconstructed_image.save("img.png")
+#idct = get_2d_idct(dct)
+#reconstructed_image = get_reconstructed_image(idct)
+#reconstructed_image.save("img.png")
 
-print numpy.array(reconstructed_image, dtype=numpy.float)
+#print numpy.array(reconstructed_image, dtype=numpy.float)
