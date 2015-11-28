@@ -118,7 +118,7 @@ def message_size_bin_padd_sliced(message_size_bin_padd_list):
 def message_sliced(message):
 
     message_bin_list = list(convert_message_to_binary(message))
-    message_aux = message_bin_list[0:3]
+    message_aux = "".join(message_bin_list[0:3])
     message_bin_list = message_bin_list[3:]
     return message_aux
 
@@ -140,13 +140,18 @@ def hide_message(pixels, message):
     #adicionar o padding
     message_size_bin_padd = add_padding(message_size_bin)
     message_size_bin_padd_list = list(message_size_bin_padd)
-    
-    size = imgR.shape()
-    line_size = size[0]
-    column_size = size[0]
 
-    for i in line_size:
-        for j in column_size:
+
+    size = imgR.shape[0]
+    line_size = size
+    column_size = size
+    i=0
+    j=0
+    last_i = i
+    last_j = j
+
+    while i < line_size:
+        while j < column_size:
 
             if message_size_bin_padd_list > 0:
                 binImgR = float_to_bin(dctRed[i][j]) 
@@ -155,28 +160,30 @@ def hide_message(pixels, message):
                 dctRed[i][j] = bin_to_float(binImgR[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
                 dctRed[i][j] = bin_to_float(binImgG[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
                 dctRed[i][j] = bin_to_float(binImgB[:-3] + message_size_bin_padd_sliced(message_size_bin_padd))
-            
+                i+=1
+                j+=1
             else:
                 last_i = i
                 last_j = j
                 break
 
 
-    for last_i in line_size:
-        for last_i in column_size:
+    while last_i < line_size:
+        while last_i < line_size:
 
-            binImgR = float_to_bin(dctRed[i][j]) 
-            binImgG = float_to_bin(dctGreen[i][j])
-            binImgB = float_to_bin(dctRed[i][j])
-            dctRed[i][j] = bin_to_float(binImgR[:-3]+message_sliced(message))
-            dctRed[i][j] = bin_to_float(binImgG[:-3]+message_sliced(message))
-            dctRed[i][j] = bin_to_float(binImgB[:-3]+message_sliced(message))
+            binImgR = float_to_bin(dctRed[last_i][last_j]) 
+            binImgG = float_to_bin(dctGreen[last_i][last_j])
+            binImgB = float_to_bin(dctRed[last_i][last_j])
+            dctRed[last_i][last_j] = bin_to_float(binImgR[:-3]+message_sliced(message))
+            dctRed[last_i][last_j] = bin_to_float(binImgG[:-3]+message_sliced(message))
+            dctRed[last_i][last_j] = bin_to_float(binImgB[:-3]+message_sliced(message))
+            last_i+=1
+            last_j+=1
+##########################falta fazer o merge das 3 imagens ################ 
 
-
-
-#pixels = open_image()
+pixels = open_image()
 #print pixels
-#hide_message(pixels, "efef")
+hide_message(pixels, "efef")
 #dct_size = pixels.shape[0]
 #dct = get_2D_dct(pixels)
 #print dct
