@@ -160,8 +160,8 @@ def hide_message(pixels, message):
     while i < line_size:
         while j < column_size:
 
-            if message_size_bin_padd_list > 0:
-                binImgR = float_to_bin(dctRed[i][j]) 
+            if len(message_size_bin_padd_list) > 0:
+                binImgR = float_to_bin(dctRed[i][j])
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctBlue[i][j])
                 try:
@@ -183,7 +183,11 @@ def hide_message(pixels, message):
                 last_i = i
                 last_j = j
                 break
+        if last_i > 0 and last_j > 0:
+            break
 
+    print  last_i
+    print  last_j
 
     while last_i < line_size:
         while last_i < line_size:
