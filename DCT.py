@@ -195,9 +195,9 @@ def hide_message(pixels, message):
             binImgR = float_to_bin(dctRed[last_i][last_j]) 
             binImgG = float_to_bin(dctGreen[last_i][last_j])
             binImgB = float_to_bin(dctRed[last_i][last_j])
-            dctRed[last_i][last_j] = bin_to_float(binImgR[:-3]+message_sliced(message))
-            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-3]+message_sliced(message))
-            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-3]+message_sliced(message))
+            dctRed[last_i][last_j] = bin_to_float(binImgR[:-4]+message_sliced(message))
+            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-4]+message_sliced(message))
+            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-4]+message_sliced(message))
             last_i+=1
             last_j+=1
     #
@@ -208,6 +208,8 @@ def hide_message(pixels, message):
     # print "|"
     # print dctBlue
 ##########################falta fazer o merge das 3 imagens ################ 
+def extract_message(image):
+
 
 pixels = open_image()
 #print pixels
