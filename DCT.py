@@ -270,7 +270,7 @@ def hide_file(file_name):
 
 open_image("bg.jpg")
 hide_file("LennaS.jpg")
-
+#ola
 
 
 
