@@ -109,21 +109,21 @@ def convert_message_to_binary(message):
     return result
 
 
-def message_size_bin_padd_sliced(message_size_bin_padd_list):
-    message_aux = message_size_bin_padd_list[0:4]
-    del message_size_bin_padd_list[0:4]
-    if len(message_aux) != 4:
+def message_size_bin_padd_sliced(message_size_bin_padd_list, nr_lsb):
+    message_aux = message_size_bin_padd_list[0:nr_lsb]
+    del message_size_bin_padd_list[0:nr_lsb]
+    if len(message_aux) != nr_lsb:
         raise ValueError('Bits are over')
     print message_size_bin_padd_list
     return ''.join(message_aux)
 
-def message_sliced(message):
+def message_sliced(message, nr_lsb):
     message_bin_list = list(convert_message_to_binary(message))
-    message_aux = "".join(message_bin_list[0:3])
-    message_bin_list = message_bin_list[3:]
+    message_aux = "".join(message_bin_list[0:nr_lsb])
+    message_bin_list = message_bin_list[nr_lsb:]
     return message_aux
 
-def hide_message(pixels, message):
+def hide_message(pixels, message, nr_lsb):
 
     message_size_bin = convert_decimal_binary(len(message))
     
@@ -165,15 +165,15 @@ def hide_message(pixels, message):
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctBlue[i][j])
                 try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctRed[i][j] = bin_to_float(binImgR[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
                 except:
                     pass
                 try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctGreen[i][j] = bin_to_float(binImgG[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
                 except:
                     pass
                 try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctBlue[i][j] = bin_to_float(binImgB[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
                 except:
                     pass
                 i+=1
@@ -195,9 +195,9 @@ def hide_message(pixels, message):
             binImgR = float_to_bin(dctRed[last_i][last_j]) 
             binImgG = float_to_bin(dctGreen[last_i][last_j])
             binImgB = float_to_bin(dctRed[last_i][last_j])
-            dctRed[last_i][last_j] = bin_to_float(binImgR[:-4]+message_sliced(message))
-            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-4]+message_sliced(message))
-            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-4]+message_sliced(message))
+            dctRed[last_i][last_j] = bin_to_float(binImgR[:-nr_lsb]+message_sliced(message,nr_lsb))
+            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-nr_lsb]+message_sliced(message,nr_lsb))
+            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-nr_lsb]+message_sliced(message,nr_lsb))
             last_i+=1
             last_j+=1
     #
@@ -208,12 +208,12 @@ def hide_message(pixels, message):
     # print "|"
     # print dctBlue
 ##########################falta fazer o merge das 3 imagens ################ 
-def extract_message(image):
+#def extract_message(image):
 
 
 pixels = open_image()
 #print pixels
-hide_message(pixels, "efef")
+hide_message(pixels, "efef", 4)
 #dct_size = pixels.shape[0]
 #dct = get_2D_dct(pixels)
 #print dct
