@@ -138,12 +138,6 @@ def hide_message(pixels, message, nr_lsb):
     dctGreen = get_2D_dct(imgG)
     dctBlue = get_2D_dct(imgB)
 
-    # print dctRed
-    # print "|"
-    # print dctGreen
-    # print "|"
-    # print dctBlue
-
     #adicionar o padding
     message_size_bin_padd = add_padding(message_size_bin)
     message_size_bin_padd_list = list(message_size_bin_padd)
@@ -157,6 +151,7 @@ def hide_message(pixels, message, nr_lsb):
     last_i = i
     last_j = j
 
+    #Guardar o tamanho da mensagem escondida
     while i < line_size:
         while j < column_size:
 
@@ -179,16 +174,13 @@ def hide_message(pixels, message, nr_lsb):
                 i+=1
                 j+=1
             else:
-                print "\nELSE\n"
                 last_i = i
                 last_j = j
                 break
         if last_i > 0 and last_j > 0:
             break
 
-    print  last_i
-    print  last_j
-
+    #Esconder a mensagem 
     while last_i < line_size:
         while last_i < line_size:
 
@@ -200,15 +192,25 @@ def hide_message(pixels, message, nr_lsb):
             dctBlue[last_i][last_j] = bin_to_float(binImgB[:-nr_lsb]+message_sliced(message,nr_lsb))
             last_i+=1
             last_j+=1
-    #
     # print"=========================================================="
     # print dctRed
     # print "|"
     # print dctGreen
     # print "|"
     # print dctBlue
-##########################falta fazer o merge das 3 imagens ################ 
+
+    ########################## Nao sei se o Merge ficou bem feito---Nao consegui testar ################ 
+    out = Image.merge("RGB", (r, g, b))
+    out.save("merged.png")
+
+
+
+
 #def extract_message(image):
+
+
+
+
 
 
 pixels = open_image()
