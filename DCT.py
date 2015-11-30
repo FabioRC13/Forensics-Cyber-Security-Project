@@ -19,7 +19,7 @@ dctBlue = None
 
 #Metadata specifications
 FILE_SIZE_HEADER_BITS = 32
-FILE_NAME_SIZE_HEADER_BITS = 12
+FILE_NAME_SIZE_HEADER_BITS = 16
 LSB_SIZE_BITS = 8
 METADATA_LSB = 4
 
@@ -53,9 +53,9 @@ def open_image(file_name, lsbs):
     dctGreen = get_2D_dct(imgG)
     dctBlue = get_2D_dct(imgB)
 
-    image_theoretical_max_size = float(get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, lsbs))/1024
+    image_theoretical_max_size = get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, lsbs)
 
-    print "image_theoretical_max_size = " + str(image_theoretical_max_size) + " KBytes"
+    print "image_theoretical_max_size = " + str(image_theoretical_max_size) + " Bytes"
     return image
 
 
@@ -293,14 +293,25 @@ def hide_metadata(size, file_name):
     return i, j
 
 def hide_file(file_name, lsb):
-
     file_hex = open_file(file_name)
+    print image_theoretical_max_size
+    print current_file_size_bytes + ((FILE_SIZE_HEADER_BITS + FILE_NAME_SIZE_HEADER_BITS + LSB_SIZE_BITS)/8)
+    if image_theoretical_max_size < (current_file_size_bytes + ((FILE_SIZE_HEADER_BITS + FILE_NAME_SIZE_HEADER_BITS + LSB_SIZE_BITS)/8)):
+        print "Image to small for current selected file, try to change LSB value."
+        raise ValueError('Image to small for current selected file, try to change LSB value')
+
     binary = hex_to_binary(file_hex)
     binary_list = list(binary)
 
     global dctRed
     global dctGreen
     global dctBlue
+
+    # print dctRed
+    # print "===="
+    # print dctGreen
+    # print "===="
+    # print dctBlue
 
     print "File has "+str(len(binary)/8)+" Bytes"
 
@@ -338,14 +349,23 @@ def hide_file(file_name, lsb):
             break
         i+=1
         j=0
+
+    # print i
+    # print j
+    # print dctRed
+    # print "===="
+    # print dctGreen
+    # print "===="
+    # print dctBlue
+    # print '{0:.64f}'.format(dctBlue[9][9])
     return dctRed, dctGreen, dctBlue
 
 ##########################falta fazer o merge das 3 imagens ################ 
 #def extract_message(image):
 
-lsbs = 56
-open_image("original.png", lsbs)
-dr, dg, db = hide_file("photo.png", lsbs)
+lsbs = 30
+open_image("LennaS.jpg", lsbs)
+dr, dg, db = hide_file("LennaSS.jpg", lsbs)
 a=get_reconstructed_image(get_2d_idct(dr))
 b=get_reconstructed_image(get_2d_idct(dg))
 c=get_reconstructed_image(get_2d_idct(db))
