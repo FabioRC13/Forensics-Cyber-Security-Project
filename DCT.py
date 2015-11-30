@@ -2,12 +2,25 @@
 import io
 import os
 from PIL import Image
+import binascii
+import os
 import numpy
 import matplotlib.pyplot as plt
 import scipy
 from scipy import fftpack
 import urllib2
 import struct
+
+current_file_size_bytes = 0
+image_theoretical_max_size = 0
+dctRed = None
+dctGreen = None
+dctBlue = None
+
+#Metadata specifications
+FILE_SIZE_HEADER_BITS = 32
+FILE_NAME_SIZE_HEADER_BITS = 9
+LSB_SIZE_BITS = 4
 
 #Convert a decimal number to binary
 def convert_decimal_binary(value):
@@ -22,15 +35,41 @@ def convert_decimal_binary(value):
     return s
 
 
-def open_image():
-    image = Image.open("LennaS.jpg").convert('RGB')
+def open_image(file_name):
+    global dctRed
+    global dctGreen
+    global dctBlue
+    global image_theoretical_max_size
+    image = Image.open(file_name).convert('RGB')
+    r, g, b = image.split()
+
+    imgR = numpy.array(r, dtype=numpy.float)
+    imgG = numpy.array(g, dtype=numpy.float)
+    imgB = numpy.array(b, dtype=numpy.float)
+
+    #Conversao dos DCT
+    dctRed = get_2D_dct(imgR)
+    dctGreen = get_2D_dct(imgG)
+    dctBlue = get_2D_dct(imgB)
+
+    image_theoretical_max_size = float(get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, 4))/1024
+
+    print "image_theoretical_max_size = " + str(image_theoretical_max_size) + " KBytes"
     return image
 
-    
+
    # out = Image.merge("RGB", (r, g, b))
     #out.save("merged.png")
     #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
+
+def get_image_theoretical_max_size(dctR, dctG, dctB, LSB_size):
+    size_matrixR = dctR.shape[0]
+    size_matrixG = dctG.shape[0]
+    size_matrixB = dctB.shape[0]
+    return ((size_matrixR * size_matrixR * LSB_size)/8) + ((size_matrixG * size_matrixG * LSB_size)/8) + \
+           ((size_matrixB * size_matrixB * LSB_size)/8)
+
  
 
 def get_2D_dct(img):
@@ -42,6 +81,21 @@ def get_2d_idct(coefficients):
     """ Get 2D Inverse Cosine Transform of Image
     """
     return fftpack.idct(fftpack.idct(coefficients.T, norm='ortho').T, norm='ortho')
+
+def open_file(filename):
+    global current_file_size_bytes
+    with open(filename, 'rb') as f:
+        content = f.read()
+    st = os.stat(filename)
+    current_file_size_bytes = st.st_size
+    return binascii.hexlify(content)
+
+def byte_to_binary(n):
+    return ''.join(str((n & (1 << i)) and 1) for i in reversed(range(8)))
+
+def hex_to_binary(h):
+    return ''.join(byte_to_binary(ord(b)) for b in binascii.unhexlify(h))
+
 
 def get_reconstructed_image(raw):
     img = raw.clip(0, 255)
@@ -109,49 +163,32 @@ def convert_message_to_binary(message):
     return result
 
 
-def message_size_bin_padd_sliced(message_size_bin_padd_list, nr_lsb):
-    message_aux = message_size_bin_padd_list[0:nr_lsb]
-    del message_size_bin_padd_list[0:nr_lsb]
-    if len(message_aux) != nr_lsb:
+def message_size_bin_padd_sliced(message_size_bin_padd_list):
+    message_aux = message_size_bin_padd_list[0:4]
+    del message_size_bin_padd_list[0:4]
+    if len(message_aux) != 4:
+        print 'Bits are over'
         raise ValueError('Bits are over')
-    print message_size_bin_padd_list
     return ''.join(message_aux)
 
-def message_sliced(message, nr_lsb):
+def message_sliced(message):
     message_bin_list = list(convert_message_to_binary(message))
-    message_aux = "".join(message_bin_list[0:nr_lsb])
-    message_bin_list = message_bin_list[nr_lsb:]
+    message_aux = "".join(message_bin_list[0:3])
+    message_bin_list = message_bin_list[3:]
     return message_aux
 
-def hide_message(pixels, message, nr_lsb):
 
-    message_size_bin = convert_decimal_binary(len(message))
-    
-    r, g, b = pixels.split()
-
-    imgR = numpy.array(r, dtype=numpy.float)
-    imgG = numpy.array(g, dtype=numpy.float)
-    imgB = numpy.array(b, dtype=numpy.float)
-
-    #Conversao dos DCT
-    dctRed = get_2D_dct(imgR)
-    dctGreen = get_2D_dct(imgG)
-    dctBlue = get_2D_dct(imgB)
-
-    #adicionar o padding
+def hide_metadata(size, file_name):
+    global LSB_SIZE_BITS
+    message_size_bin = convert_decimal_binary(size)
+    print message_size_bin
     message_size_bin_padd = add_padding(message_size_bin)
     message_size_bin_padd_list = list(message_size_bin_padd)
-
-
-    size = imgR.shape[0]
+    size = dctRed.shape[0]
     line_size = size - 1
     column_size = size - 1
     i=0
     j=0
-    last_i = i
-    last_j = j
-
-    #Guardar o tamanho da mensagem escondida
     while i < line_size:
         while j < column_size:
 
@@ -160,65 +197,80 @@ def hide_message(pixels, message, nr_lsb):
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctBlue[i][j])
                 try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
+                    dctRed[i][j] = bin_to_float(binImgR[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
                 try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
+                    dctGreen[i][j] = bin_to_float(binImgG[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
                 try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-nr_lsb] + message_size_bin_padd_sliced(message_size_bin_padd_list,nr_lsb))
+                    dctBlue[i][j] = bin_to_float(binImgB[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
                 i+=1
                 j+=1
             else:
-                last_i = i
-                last_j = j
+                last = True
                 break
-        if last_i > 0 and last_j > 0:
+        if last == True:
             break
 
-    #Esconder a mensagem 
-    while last_i < line_size:
-        while last_i < line_size:
+def hide_file(file_name):
 
-            binImgR = float_to_bin(dctRed[last_i][last_j]) 
-            binImgG = float_to_bin(dctGreen[last_i][last_j])
-            binImgB = float_to_bin(dctRed[last_i][last_j])
-            dctRed[last_i][last_j] = bin_to_float(binImgR[:-nr_lsb]+message_sliced(message,nr_lsb))
-            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-nr_lsb]+message_sliced(message,nr_lsb))
-            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-nr_lsb]+message_sliced(message,nr_lsb))
-            last_i+=1
-            last_j+=1
-    # print"=========================================================="
+    hex = open_file(file_name)
+    binary = hex_to_binary(hex)
+    message ="sdfssdf"
+
+    global dctRed
+    global dctGreen
+    global dctBlue
+
     # print dctRed
     # print "|"
     # print dctGreen
     # print "|"
     # print dctBlue
 
-    ########################## Nao sei se o Merge ficou bem feito---Nao consegui testar ################ 
-    out = Image.merge("RGB", (r, g, b))
-    out.save("merged.png")
+    #adicionar o padding
 
 
+    print "File has "+str(len(binary)/8)+" Bytes"
+    hide_metadata(len(binary), file_name)
+
+    last_i = 10
+    last_j = 0
 
 
+    size = dctRed.shape[0]
+    line_size = size - 1
+    column_size = size - 1
+
+    while last_i < line_size:
+        while last_i < column_size:
+
+            binImgR = float_to_bin(dctRed[last_i][last_j]) 
+            binImgG = float_to_bin(dctGreen[last_i][last_j])
+            binImgB = float_to_bin(dctRed[last_i][last_j])
+            dctRed[last_i][last_j] = bin_to_float(binImgR[:-4]+message_sliced(message))
+            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-4]+message_sliced(message))
+            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-4]+message_sliced(message))
+            last_i+=1
+            last_j+=1
+    #
+    # print"=========================================================="
+    # print dctRed
+    # print "|"
+    # print dctGreen
+    # print "|"
+    # print dctBlue
+##########################falta fazer o merge das 3 imagens ################ 
 #def extract_message(image):
 
 
+open_image("bg.jpg")
+hide_file("LennaS.jpg")
 
-
-
-
-pixels = open_image()
-#print pixels
-hide_message(pixels, "efef", 4)
-#dct_size = pixels.shape[0]
-#dct = get_2D_dct(pixels)
-#print dct
 
 
 
