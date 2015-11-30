@@ -19,8 +19,9 @@ dctBlue = None
 
 #Metadata specifications
 FILE_SIZE_HEADER_BITS = 32
-FILE_NAME_SIZE_HEADER_BITS = 9
-LSB_SIZE_BITS = 4
+FILE_NAME_SIZE_HEADER_BITS = 12
+LSB_SIZE_BITS = 8
+METADATA_LSB = 4
 
 #Convert a decimal number to binary
 def convert_decimal_binary(value):
@@ -35,7 +36,7 @@ def convert_decimal_binary(value):
     return s
 
 
-def open_image(file_name):
+def open_image(file_name, lsbs):
     global dctRed
     global dctGreen
     global dctBlue
@@ -52,13 +53,13 @@ def open_image(file_name):
     dctGreen = get_2D_dct(imgG)
     dctBlue = get_2D_dct(imgB)
 
-    image_theoretical_max_size = float(get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, 4))/1024
+    image_theoretical_max_size = float(get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, lsbs))/1024
 
     print "image_theoretical_max_size = " + str(image_theoretical_max_size) + " KBytes"
     return image
 
 
-   # out = Image.merge("RGB", (r, g, b))
+    #out = Image.merge("RGB", (r, g, b))
     #out.save("merged.png")
     #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
@@ -89,6 +90,14 @@ def open_file(filename):
     st = os.stat(filename)
     current_file_size_bytes = st.st_size
     return binascii.hexlify(content)
+
+
+def utf8_to_bin(text):
+    return '{:b}'.format(int(text.encode('utf-8').encode('hex'), 16))
+
+
+def bin_to_utf8(bits):
+    ('%x' % int(bits, 2)).decode('hex').decode('utf-8')
 
 def byte_to_binary(n):
     return ''.join(str((n & (1 << i)) and 1) for i in reversed(range(8)))
@@ -147,9 +156,8 @@ def bin_to_float(b):
     bf = int_to_bytes(int(b, 2), 8)  # 8 bytes needed for IEEE 754 binary64
     return struct.unpack('>d', bf)[0]
 
-def add_padding(message_size_bin):
-
-    while len(message_size_bin) < 32:
+def add_padding(message_size_bin, padd_size):
+    while len(message_size_bin) < padd_size:
         message_size_bin = "0" + message_size_bin
     return message_size_bin
 
@@ -162,115 +170,188 @@ def convert_message_to_binary(message):
         result = result + bits
     return result
 
-
 def message_size_bin_padd_sliced(message_size_bin_padd_list):
-    message_aux = message_size_bin_padd_list[0:4]
-    del message_size_bin_padd_list[0:4]
-    if len(message_aux) != 4:
-        print 'Bits are over'
+    message_aux = message_size_bin_padd_list[0:METADATA_LSB]
+    del message_size_bin_padd_list[0:METADATA_LSB]
+    if len(message_aux) != METADATA_LSB:
         raise ValueError('Bits are over')
     return ''.join(message_aux)
 
-def message_sliced(message):
-    message_bin_list = list(convert_message_to_binary(message))
-    message_aux = "".join(message_bin_list[0:3])
-    message_bin_list = message_bin_list[3:]
-    return message_aux
+def message_sliced(data_bin_list, lsb):
+    data_aux = data_bin_list[0:lsb]
+    del data_bin_list[0:lsb]
+    if len(data_aux) != lsb:
+        raise ValueError('Bits are over')
+    return ''.join(data_aux)
 
 
 def hide_metadata(size, file_name):
+    global FILE_SIZE_HEADER_BITS
+    global METADATA_LSB
+    global FILE_NAME_SIZE_HEADER_BITS
     global LSB_SIZE_BITS
+
     message_size_bin = convert_decimal_binary(size)
-    print message_size_bin
-    message_size_bin_padd = add_padding(message_size_bin)
+    message_size_bin_padd = add_padding(message_size_bin, FILE_SIZE_HEADER_BITS)
+
+    file_name_size_bin = convert_decimal_binary(len(utf8_to_bin(file_name)))
+    file_name_size_bin_padd = add_padding(file_name_size_bin, FILE_NAME_SIZE_HEADER_BITS)
+
+    LSB_size_bin = convert_decimal_binary(METADATA_LSB)
+    LSB_size_bin_padd = add_padding(LSB_size_bin, LSB_SIZE_BITS)
+
     message_size_bin_padd_list = list(message_size_bin_padd)
+    file_name_size_bin_padd_list = list(file_name_size_bin_padd)
+    LSB_size_bin_padd_list = list(LSB_size_bin_padd)
+
     size = dctRed.shape[0]
     line_size = size - 1
     column_size = size - 1
     i=0
     j=0
+    last = False
+
     while i < line_size:
         while j < column_size:
-
             if len(message_size_bin_padd_list) > 0:
                 binImgR = float_to_bin(dctRed[i][j])
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctBlue[i][j])
                 try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
                 try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
                 try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-4] + message_size_bin_padd_sliced(message_size_bin_padd_list))
+                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
                 except:
                     pass
-                i+=1
                 j+=1
             else:
                 last = True
                 break
         if last == True:
             break
+        i+=1
 
-def hide_file(file_name):
+    last = False
+    while i < line_size:
+        while j < column_size:
+            if len(file_name_size_bin_padd_list) > 0:
+                binImgR = float_to_bin(dctRed[i][j])
+                binImgG = float_to_bin(dctGreen[i][j])
+                binImgB = float_to_bin(dctBlue[i][j])
+                try:
+                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
+                except:
+                    pass
+                try:
+                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
+                except:
+                    pass
+                try:
+                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
+                except:
+                    pass
+                j+=1
+            else:
+                last = True
+                break
+        if last == True:
+            break
+        i+=1
 
-    hex = open_file(file_name)
-    binary = hex_to_binary(hex)
-    message ="sdfssdf"
+    last = False
+    while i < line_size:
+        while j < column_size:
+            if len(LSB_size_bin_padd_list) > 0:
+                binImgR = float_to_bin(dctRed[i][j])
+                binImgG = float_to_bin(dctGreen[i][j])
+                binImgB = float_to_bin(dctBlue[i][j])
+                try:
+                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
+                except:
+                    pass
+                try:
+                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
+                except:
+                    pass
+                try:
+                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
+                except:
+                    pass
+                j+=1
+            else:
+                last = True
+                break
+        if last == True:
+            break
+        i+=1
+    return i, j
+
+def hide_file(file_name, lsb):
+
+    file_hex = open_file(file_name)
+    binary = hex_to_binary(file_hex)
+    binary_list = list(binary)
 
     global dctRed
     global dctGreen
     global dctBlue
 
-    # print dctRed
-    # print "|"
-    # print dctGreen
-    # print "|"
-    # print dctBlue
-
-    #adicionar o padding
-
-
     print "File has "+str(len(binary)/8)+" Bytes"
-    hide_metadata(len(binary), file_name)
 
-    last_i = 10
-    last_j = 0
-
+    i, j = hide_metadata(len(binary), file_name)
 
     size = dctRed.shape[0]
     line_size = size - 1
     column_size = size - 1
+    last = False
+    while i < line_size:
+        while j < column_size:
+            if len(binary_list) > 0:
+                binImgR = float_to_bin(dctRed[i][j])
+                binImgG = float_to_bin(dctGreen[i][j])
+                binImgB = float_to_bin(dctRed[i][j])
 
-    while last_i < line_size:
-        while last_i < column_size:
+                try:
+                    dctRed[i][j] = bin_to_float(binImgR[:-lsb]+message_sliced(binary_list, lsb))
+                except:
+                    pass
+                try:
+                    dctGreen[i][j] = bin_to_float(binImgG[:-lsb]+message_sliced(binary_list, lsb))
+                except:
+                    pass
+                try:
+                    dctBlue[i][j] = bin_to_float(binImgB[:-lsb]+message_sliced(binary_list, lsb))
+                except:
+                    pass
+                j+=1
+            else:
 
-            binImgR = float_to_bin(dctRed[last_i][last_j]) 
-            binImgG = float_to_bin(dctGreen[last_i][last_j])
-            binImgB = float_to_bin(dctRed[last_i][last_j])
-            dctRed[last_i][last_j] = bin_to_float(binImgR[:-4]+message_sliced(message))
-            dctGreen[last_i][last_j] = bin_to_float(binImgG[:-4]+message_sliced(message))
-            dctBlue[last_i][last_j] = bin_to_float(binImgB[:-4]+message_sliced(message))
-            last_i+=1
-            last_j+=1
-    #
-    # print"=========================================================="
-    # print dctRed
-    # print "|"
-    # print dctGreen
-    # print "|"
-    # print dctBlue
+                last = True
+                break
+        if last == True:
+            break
+        i+=1
+        j=0
+    return dctRed, dctGreen, dctBlue
+
 ##########################falta fazer o merge das 3 imagens ################ 
 #def extract_message(image):
 
+lsbs = 56
+open_image("original.png", lsbs)
+dr, dg, db = hide_file("photo.png", lsbs)
+a=get_reconstructed_image(get_2d_idct(dr))
+b=get_reconstructed_image(get_2d_idct(dg))
+c=get_reconstructed_image(get_2d_idct(db))
 
-open_image("bg.jpg")
-hide_file("LennaS.jpg")
-#ola
+out = Image.merge("RGB", (a, b, c))
+out.save("final.png")
 
 
 
