@@ -172,7 +172,10 @@ def convert_message_to_binary(message):
 
 def message_sliced(data_bin_list, lsb):
     data_aux = data_bin_list[0:lsb]
+    print data_bin_list
     del data_bin_list[0:lsb]
+    print data_bin_list
+    print "data_aux" + ''.join(data_aux)
     if len(data_aux) != lsb:
         raise ValueError('Bits are over')
     return ''.join(data_aux)
@@ -189,7 +192,9 @@ def write_bits(bits_list, lsb, i, j):
                 binImgG = float_to_bin(dctGreen[i][j])
                 binImgB = float_to_bin(dctBlue[i][j])
                 try:
+                    print "Antes - "+str(float_to_bin(dctRed[i][j]))
                     dctRed[i][j] = bin_to_float(binImgR[:-lsb] + message_sliced(bits_list, lsb))
+                    print "Depoi - "+str(float_to_bin(dctRed[i][j]))
                 except:
                     pass
                 try:
@@ -216,9 +221,13 @@ def hide_metadata(size, file_name):
     global METADATA_LSB
     global FILE_NAME_SIZE_HEADER_BITS
     global LSB_SIZE_BITS
+    i = 0
+    j = 0
 
+    print "size = " + str(size)
     message_size_bin = convert_decimal_binary(size)
     message_size_bin_padd = add_padding(message_size_bin, FILE_SIZE_HEADER_BITS)
+    print "size2 = " + str(message_size_bin_padd)
 
     file_name_size_bin = convert_decimal_binary(len(utf8_to_bin(file_name)))
     file_name_size_bin_padd = add_padding(file_name_size_bin, FILE_NAME_SIZE_HEADER_BITS)
@@ -230,12 +239,11 @@ def hide_metadata(size, file_name):
     file_name_size_bin_padd_list = list(file_name_size_bin_padd)
     LSB_size_bin_padd_list = list(LSB_size_bin_padd)
 
-    i = 0
-    j = 0
 
     i, j = write_bits(message_size_bin_padd_list, METADATA_LSB, i, j)
     i, j = write_bits(file_name_size_bin_padd_list, METADATA_LSB, i, j)
     i, j = write_bits(LSB_size_bin_padd_list, METADATA_LSB, i, j)
+
     return i, j
 
 def hide_file(file_name, lsb):
@@ -249,6 +257,8 @@ def hide_file(file_name, lsb):
     binary = hex_to_binary(file_hex)
     binary_list = list(binary)
 
+    bin_file_name = utf8_to_bin(file_name)
+
     global dctRed
     global dctGreen
     global dctBlue
@@ -260,9 +270,11 @@ def hide_file(file_name, lsb):
     # print dctBlue
 
     print "File has "+str(len(binary)/8)+" Bytes"
-
     i, j = hide_metadata(len(binary), file_name)
+
+    i, j = write_bits(list(bin_file_name), lsb, i, j)
     i, j = write_bits(binary_list, lsb, i, j)
+
 
 
     # print i
@@ -272,22 +284,77 @@ def hide_file(file_name, lsb):
     # print dctGreen
     # print "===="
     # print dctBlue
-    # print '{0:.64f}'.format(dctBlue[9][9])
-    return dctRed, dctGreen, dctBlue
+    #print '{0:.64f}'.format(dctBlue[5][8])
+    a=get_reconstructed_image(get_2d_idct(dctRed))
+    b=get_reconstructed_image(get_2d_idct(dctGreen))
+    c=get_reconstructed_image(get_2d_idct(dctBlue))
+    return Image.merge("RGB", (a, b, c))
 
-##########################falta fazer o merge das 3 imagens ################ 
-#def extract_message(image):
+def extract_metadata():
+    file_size_bin = list()
+    file_name_size_bin = list()
+    lsb_bin = list()
 
-lsbs = 30
-open_image("LennaS.jpg", lsbs)
-dr, dg, db = hide_file("LennaSS.jpg", lsbs)
-a=get_reconstructed_image(get_2d_idct(dr))
-b=get_reconstructed_image(get_2d_idct(dg))
-c=get_reconstructed_image(get_2d_idct(db))
+    i = 0
+    j = 0
+    size = dctRed.shape[0]
+    line_size = size - 1
+    column_size = size - 1
+    last = False
+    while i < line_size:
+        while j < column_size:
 
-out = Image.merge("RGB", (a, b, c))
+            binImgR = float_to_bin(dctRed[i][j])
+            binImgG = float_to_bin(dctGreen[i][j])
+            binImgB = float_to_bin(dctBlue[i][j])
+
+            file_size_bin.append(binImgR[-METADATA_LSB:])
+            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+                last = True
+                break
+
+            file_size_bin.append(binImgG[-METADATA_LSB:])
+            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+                last = True
+                break
+
+            file_size_bin.append(binImgB[-METADATA_LSB:])
+            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+                last = True
+                break
+            j+=1
+
+        if last == True:
+            break
+        i+=1
+        j=0
+    print file_size_bin
+    bin_size = ''.join(file_size_bin)
+    print bin_size
+    print int(bin_size, 2)/8
+
+def extract_message(file_name):
+    global dctRed
+    global dctGreen
+    global dctBlue
+    print float_to_bin(dctBlue[0][1])
+    open_image(file_name, 0)
+    extract_metadata()
+
+
+
+
+
+
+
+lsbs = 55
+open_image("Lenna.jpg", lsbs)
+print float_to_bin(dctBlue[0][1])
+out = hide_file("LennaS.jpg", lsbs)
+print float_to_bin(dctBlue[0][1])
 out.save("final.png")
-
+print "=============="
+extract_message("final.png")
 
 
 
