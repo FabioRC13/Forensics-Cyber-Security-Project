@@ -16,7 +16,7 @@ def startGUI():
     master = Tk()
     intitGui()
     master.mainloop()
-    ############################# Functions ########################################
+############################# Functions ########################################
 
 
 def onOpen():
@@ -47,10 +47,12 @@ def onSaveAs():
 def setImage(img):
     global current_full_size_image
     current_full_size_image = img
-    l, h = img.size
+    #l, h = img.size
     #print l, h
     #print int(250), float(250) / float(l)
-    img_resize = img.resize((int(250), int((float(250) / float(l)) * h)), Image.ANTIALIAS)
+    #img_resize = img.resize((int(250), int((float(250) / float(l)) * h)), Image.ANTIALIAS)
+    img_resize = img.resize((int(150), int(150)), Image.ANTIALIAS)
+
     photo = ImageTk.PhotoImage(img_resize)
     label1.configure(image=photo)
     label1.image = photo  # keep a reference!
@@ -84,63 +86,105 @@ def extract_message():
     print message
     dialog_box(message)
 
+def about_box():
+    tkMessageBox.showinfo(title="About", message="Skryvat V1.0\nAuthors:\nFabio Carvalho\nPedro Dias\nCarlos Ribeiro\nIP: Tecnico Lisboa\nRelease: 5 December 2015\nLast Update: 5 December 2015")
     ############################## Interface Code ################################
 
 
 def intitGui():
     master.title("Welcome and feel free to hide your secrets with us")
-    # pack()
-    #w,h = img.size
-    master.geometry('%dx%d+0+0' % (300,400))
-
-    global label1 #e global para poder ser acedida noutas funcoes
-    global e1
-
-    label1 = Tkinter.Label(border=25)
-    #label1.grid(row = 0, column = 0)
-    label1.grid(row=0)
-    menubar = Menu(master)
-    filemenu = Menu(menubar, tearoff=0)
-    master.config(menu=menubar)
+    
+    #Setting Background
+    bg =Image.open('bg2.jpg')
+    background_image = ImageTk.PhotoImage(bg)
+    w = background_image.width()
+    h = background_image.height()
+    master.geometry('%dx%d+0+0' % (w,h))
+    background_label = Tkinter.Label(master, image=background_image)
+    background_label.place(x=0, y=0, relwidth=1, relheight=1)
+    background_label.image = background_image
 
     ############################## Tool Bar ################################
-    #filemenu.add_command(label="New", command=donothing)
-    filemenu.add_command(label="Open", command=onOpen)
-    #filemenu.add_command(label="Save", command=donothing)
-    filemenu.add_command(label="Save as...", command=onSaveAs)
-    filemenu.add_command(label="Close", command=master.quit)
-    filemenu.add_separator()
+    menubar = Menu(master)
+    master.config(menu=menubar)
+    
+    ##### EM CASO DE NAO GOSTAREM DAS ALTERACOES #####
 
-    filemenu.add_command(label="Exit", command=master.quit)
-    menubar.add_cascade(label="File", menu=filemenu)
-    editmenu = Menu(menubar, tearoff=0)
-    editmenu.add_command(label="Undo", command=donothing)
-    editmenu.add_separator()
+    #filemenu.add_command(label="Open", command=onOpen)
+    #filemenu.add_command(label="Save as...", command=onSaveAs)
+    #filemenu.add_command(label="Close", command=master.quit)
+    #filemenu.add_separator()
 
-    editmenu.add_command(label="Cut", command=donothing)
-    editmenu.add_command(label="Copy", command=donothing)
-    editmenu.add_command(label="Paste", command=donothing)
-    editmenu.add_command(label="Delete", command=donothing)
-    editmenu.add_command(label="Select All", command=donothing)
-    menubar.add_cascade(label="Edit", menu=editmenu)
+    #filemenu.add_command(label="Exit", command=master.quit)
+    #menubar.add_cascade(label="File", menu=filemenu)
+    #editmenu = Menu(menubar, tearoff=0)
+    #editmenu.add_command(label="Undo", command=donothing)
+    #editmenu.add_separator()
+
+    #editmenu.add_command(label="Cut", command=donothing)
+    #editmenu.add_command(label="Copy", command=donothing)
+    #editmenu.add_command(label="Paste", command=donothing)
+    #editmenu.add_command(label="Delete", command=donothing)
+    #editmenu.add_command(label="Select All", command=donothing)
+    #menubar.add_cascade(label="Edit", menu=editmenu)
+
+    #helpmenu = Menu(menubar, tearoff=0)
+    #helpmenu.add_command(label="Help Index", command=donothing)
+    #helpmenu.add_command(label="About...", command=donothing)
+    #menubar.add_cascade(label="Help", menu=helpmenu)
+
+    imagemenu = Menu(menubar, tearoff=0)
+    imagemenu.add_command(label="Open", command=onOpen)
+    imagemenu.add_command(label="Save as...", command=onSaveAs)
+    imagemenu.add_separator()
+    imagemenu.add_command(label="Replace", command=onOpen)
+    menubar.add_cascade(label="Image", menu=imagemenu)
+
+    hidemenu = Menu(menubar, tearoff=0)
+    hidemenu.add_command(label="Image", command=onOpen)
+    hidemenu.add_command(label="Document", command=onSaveAs)
+    hidemenu.add_separator()
+    hidemenu.add_command(label="Replace", command=onOpen)
+    menubar.add_cascade(label="Hide", menu=hidemenu)
+
+    windowmenu = Menu(menubar, tearoff=0)
+    windowmenu.add_command(label="Exit", command=master.quit)
+    menubar.add_cascade(label="Window", menu=windowmenu)
 
     helpmenu = Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help Index", command=donothing)
-    helpmenu.add_command(label="About...", command=donothing)
+    helpmenu.add_command(label="About...", command=about_box)
+    helpmenu.add_separator()
+    helpmenu.add_command(label="Manual", command=donothing)
     menubar.add_cascade(label="Help", menu=helpmenu)
-    ############################################################################
 
 
+    ################################ Buttons ###########################################
+
+    global label1 
+    global e1
+
+    label1 = Tkinter.Label()
+    label1.place(relx=.5, rely=.4, anchor="c") 
+    
     #button1 = Button(master, text="Select the image", command=search_img)
-    e1 = Entry(master, text="Write your message")
+    e1 = Entry(master, text="Write your message")  #vai ser entry mas tambem mostrar o caminho do documento
     button2 = Button(master, text='Hide your message', command=hide_procedure)
     button3 = Button(master, text='Extract message',  command=extract_message)
+    
 
+    button2.place(relx=.8, rely=.65, anchor="c")    
+    e1.place(relx=.5, rely=.7, anchor="c")
+    button3.place(relx=.8, rely=.72, anchor="c")
+
+    global sb 
+    sb = Spinbox(master, values=('Low','Medium','High'))
+    sb.place(relx=.2, rely=.7, anchor="c")
+    sb.insert(END, 'Quality')
+    
 
     #button2.grid(row=1)
-    button2.grid(row=1)
-    e1.grid(row=2)
-    button3.grid(row=3)
+    #e1.grid(row=2)
+    #button3.grid(row=3)
     #e1.grid(row=4)
 
     # ola = convert_message_to_binary("sdfsd")
