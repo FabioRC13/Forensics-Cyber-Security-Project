@@ -170,19 +170,45 @@ def convert_message_to_binary(message):
         result = result + bits
     return result
 
-def message_size_bin_padd_sliced(message_size_bin_padd_list):
-    message_aux = message_size_bin_padd_list[0:METADATA_LSB]
-    del message_size_bin_padd_list[0:METADATA_LSB]
-    if len(message_aux) != METADATA_LSB:
-        raise ValueError('Bits are over')
-    return ''.join(message_aux)
-
 def message_sliced(data_bin_list, lsb):
     data_aux = data_bin_list[0:lsb]
     del data_bin_list[0:lsb]
     if len(data_aux) != lsb:
         raise ValueError('Bits are over')
     return ''.join(data_aux)
+
+def write_bits(bits_list, lsb, i, j):
+    size = dctRed.shape[0]
+    line_size = size - 1
+    column_size = size - 1
+    last = False
+    while i < line_size:
+        while j < column_size:
+            if len(bits_list) > 0:
+                binImgR = float_to_bin(dctRed[i][j])
+                binImgG = float_to_bin(dctGreen[i][j])
+                binImgB = float_to_bin(dctBlue[i][j])
+                try:
+                    dctRed[i][j] = bin_to_float(binImgR[:-lsb] + message_sliced(bits_list, lsb))
+                except:
+                    pass
+                try:
+                    dctGreen[i][j] = bin_to_float(binImgG[:-lsb] + message_sliced(bits_list, lsb))
+                except:
+                    pass
+                try:
+                    dctBlue[i][j] = bin_to_float(binImgB[:-lsb] + message_sliced(bits_list, lsb))
+                except:
+                    pass
+                j+=1
+            else:
+                last = True
+                break
+        if last == True:
+            break
+        i+=1
+        j=0
+    return i, j
 
 
 def hide_metadata(size, file_name):
@@ -204,92 +230,12 @@ def hide_metadata(size, file_name):
     file_name_size_bin_padd_list = list(file_name_size_bin_padd)
     LSB_size_bin_padd_list = list(LSB_size_bin_padd)
 
-    size = dctRed.shape[0]
-    line_size = size - 1
-    column_size = size - 1
-    i=0
-    j=0
-    last = False
+    i = 0
+    j = 0
 
-    while i < line_size:
-        while j < column_size:
-            if len(message_size_bin_padd_list) > 0:
-                binImgR = float_to_bin(dctRed[i][j])
-                binImgG = float_to_bin(dctGreen[i][j])
-                binImgB = float_to_bin(dctBlue[i][j])
-                try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(message_size_bin_padd_list))
-                except:
-                    pass
-                j+=1
-            else:
-                last = True
-                break
-        if last == True:
-            break
-        i+=1
-
-    last = False
-    while i < line_size:
-        while j < column_size:
-            if len(file_name_size_bin_padd_list) > 0:
-                binImgR = float_to_bin(dctRed[i][j])
-                binImgG = float_to_bin(dctGreen[i][j])
-                binImgB = float_to_bin(dctBlue[i][j])
-                try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(file_name_size_bin_padd_list))
-                except:
-                    pass
-                j+=1
-            else:
-                last = True
-                break
-        if last == True:
-            break
-        i+=1
-
-    last = False
-    while i < line_size:
-        while j < column_size:
-            if len(LSB_size_bin_padd_list) > 0:
-                binImgR = float_to_bin(dctRed[i][j])
-                binImgG = float_to_bin(dctGreen[i][j])
-                binImgB = float_to_bin(dctBlue[i][j])
-                try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
-                except:
-                    pass
-                try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-METADATA_LSB] + message_size_bin_padd_sliced(LSB_size_bin_padd_list))
-                except:
-                    pass
-                j+=1
-            else:
-                last = True
-                break
-        if last == True:
-            break
-        i+=1
+    i, j = write_bits(message_size_bin_padd_list, METADATA_LSB, i, j)
+    i, j = write_bits(file_name_size_bin_padd_list, METADATA_LSB, i, j)
+    i, j = write_bits(LSB_size_bin_padd_list, METADATA_LSB, i, j)
     return i, j
 
 def hide_file(file_name, lsb):
@@ -316,39 +262,8 @@ def hide_file(file_name, lsb):
     print "File has "+str(len(binary)/8)+" Bytes"
 
     i, j = hide_metadata(len(binary), file_name)
+    i, j = write_bits(binary_list, lsb, i, j)
 
-    size = dctRed.shape[0]
-    line_size = size - 1
-    column_size = size - 1
-    last = False
-    while i < line_size:
-        while j < column_size:
-            if len(binary_list) > 0:
-                binImgR = float_to_bin(dctRed[i][j])
-                binImgG = float_to_bin(dctGreen[i][j])
-                binImgB = float_to_bin(dctRed[i][j])
-
-                try:
-                    dctRed[i][j] = bin_to_float(binImgR[:-lsb]+message_sliced(binary_list, lsb))
-                except:
-                    pass
-                try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-lsb]+message_sliced(binary_list, lsb))
-                except:
-                    pass
-                try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-lsb]+message_sliced(binary_list, lsb))
-                except:
-                    pass
-                j+=1
-            else:
-
-                last = True
-                break
-        if last == True:
-            break
-        i+=1
-        j=0
 
     # print i
     # print j
