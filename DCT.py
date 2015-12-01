@@ -341,7 +341,11 @@ def extract_message(file_name):
     open_image(file_name, 0)
     extract_metadata()
 
-
+  #extrai os dcts
+    #extrair a metadata
+    #extrair os bits menos significativos de cada dct 
+    #assemblar todos 
+    #imprimir a mensagem
 
 
 
