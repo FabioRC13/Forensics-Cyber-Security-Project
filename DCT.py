@@ -357,12 +357,20 @@ def extract_metadata():
     file_name_size = ''.join(file_name_size_bin)
     lsb = ''.join(lsb_bin)
 
-    print bin_size
-    print int(bin_size, 2)
+    print "tamanho em binario"
+    print bin_size #Esta a ir buscar bem o valor
+    print "tamanho em decimal"
+    print int(bin_size, 2) 
+    print "tamanho do nome do ficheiro em binario"
     print file_name_size
-    print int(file_name_size, 2)
+    print "tamanho do nome do ficheiro"
+    print int(file_name_size, 2) #Esta a ir buscar bem o valor
+    print "tamanho do lsb em binario"
     print lsb
-    print int(lsb, 2)
+    print "tamanho do nome do lsb"
+    print int(lsb, 2) #Esta a ir buscar bem o valor
+
+    return i, j, lsb, bin_size
 
     return i, j
 
@@ -371,7 +379,14 @@ def extract(file_name):
     global Green
     global Blue
     open_image(file_name, 0)
-    extract_metadata()
+    i, j, lsb, bin_size = extract_metadata()
+
+    print i
+    print j
+    print lsb
+    print bin_size
+
+    read_bits(i, j, lsb, bin_size)
 
 a = 0
 lsbs = 4
