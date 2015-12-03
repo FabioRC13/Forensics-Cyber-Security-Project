@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 import DCT
 
 current_full_size_image = None
-filename = None
+filename = ""
 sb = None
 
 def startGUI():
@@ -30,17 +30,9 @@ def onOpen():
     img = Image.open(filename)
     setImage(img,1)
 
-    quality_value = sb.get()
-    if quality_value=="Low":
-    	lsb = 1
-    elif quality_value=="Medium":
-    	lsb = 2
-    elif quality_value=="High":
-    	lsb = 3
+    lsb = setQuality()
 
-   	print quality_value
-
-    DCT.open_image(filename,lsb)  #ALTERAR DEPOIS A SPINBOX
+    DCT.open_image(filename,lsb)  
 
 def onSaveAs():
     ftypes = [
@@ -79,11 +71,7 @@ def onOpenFile():
     
     dlg = tkFileDialog.Open()
     filename = dlg.show()
-    e1.delete(0,END)
-    e1.insert(0,filename)
-
-    print filename
-
+    
     return filename
 
 
@@ -91,14 +79,26 @@ def dialog_box(msg):
     tkMessageBox.showwarning("Warning", msg)
 
 def hide_procedure():
-    global current_full_size_image
-    message = e1.get()
-    if message == "":
+
+    if filename == "":
         dialog_box("Please choose a file")
         return
 
-    print e1.get()
+    lsb = setQuality()
+    
+    hide_img = DCT.hide_file(filename, lsb)   
+    dialog_box("DONE")
 
+    setImage(hide_img,2)
+
+
+def extract_message():
+    #ACABAR
+    message = DCT.extract(filename)
+  
+
+
+def setQuality():
     quality_value = sb.get()
     if quality_value=="Low":
     	lsb = 1
@@ -107,22 +107,13 @@ def hide_procedure():
     elif quality_value=="High":
     	lsb = 3
 
-    print quality_value
+    return lsb
 
-    hide_img = DCT.hide_file(filename, lsb)   #ALTERAR COM A SPINBOX
-    dialog_box("DONE")
-
-    setImage(hide_img,2)
-
-
-def extract_message():
-    global current_full_size_image
-    message = LSB.extract_message(current_full_size_image)
-    print message
-    dialog_box(message)
 
 def about_box():
     tkMessageBox.showinfo(title="About", message="Skryvat V1.0\nAuthors:\nFabio Carvalho\nPedro Dias\nCarlos Ribeiro\nIP: Tecnico Lisboa\nRelease: 5 December 2015\nLast Update: 5 December 2015")
+
+
     ############################## Interface Code ################################
 
 
@@ -192,7 +183,11 @@ def intitGui():
     button3.place(relx=.8, rely=.9, anchor="c")
     button4.place(relx=.7, rely=.6, anchor="c")
     button5.place(relx=.5, rely=.8, anchor="c")
-    e1.place(relx=.5, rely=.9, anchor="c")
+    e1.place(relx=.2, rely=.9, anchor="c")
+
+    #e1.delete(0,END)
+    #e1.insert(0,FRASE DE TAMNHO DISPONIVEL)
+
 
     global sb 
     sb = Spinbox(master, border=0, values=('Low','Medium','High'))
