@@ -62,6 +62,15 @@ def donothing():
     button = Button(filewin, text="Do nothing button")
     button.pack()
 
+def onOpenFile():
+    # Open Callback
+    ftypes = [('All Files', '*.jpg')]     #MUDAR ISTO DEPOIS
+    dlg = tkFileDialog.Open(filetypes=ftypes)
+    filename = dlg.show()
+    e1.delete(0,END)
+    e1.insert(0,filename)
+
+
 def dialog_box(msg):
     tkMessageBox.showwarning("Warning", msg)
 
@@ -162,31 +171,33 @@ def intitGui():
 
     global label1 
     global e1
+    global label2    #To put the result image
 
     label1 = Tkinter.Label()
-    label1.place(relx=.5, rely=.4, anchor="c") 
-    
-    #button1 = Button(master, text="Select the image", command=search_img)
-    e1 = Entry(master, text="Write your message")  #vai ser entry mas tambem mostrar o caminho do documento
-    button2 = Button(master, text='Hide your message', command=hide_procedure)
-    button3 = Button(master, text='Extract message',  command=extract_message)
-    
+    label1.place(relx=.3, rely=.4, anchor="c") 
 
-    button2.place(relx=.8, rely=.65, anchor="c")    
-    e1.place(relx=.5, rely=.7, anchor="c")
-    button3.place(relx=.8, rely=.72, anchor="c")
+    label2 = Tkinter.Label()
+    label2.place(relx=.7, rely=.4, anchor="c")
+    
+    button1 = Button(master, text="Select the image", command=onOpen)
+    button2 = Button(master, text='Hide your file', command=hide_procedure)
+    button3 = Button(master, text='Extract file',  command=extract_message)
+    button4 = Button(master, text='Save result', command=onSaveAs)
+    button5 = Button(master, text='Choose file to hide', command=onOpenFile)
+    e1 = Entry(master)
+
+    button1.place(relx=.3, rely=.6, anchor="c")
+    button2.place(relx=.8, rely=.8, anchor="c")    
+    button3.place(relx=.8, rely=.9, anchor="c")
+    button4.place(relx=.7, rely=.6, anchor="c")
+    button5.place(relx=.5, rely=.8, anchor="c")
+    e1.place(relx=.5, rely=.9, anchor="c")
 
     global sb 
     sb = Spinbox(master, values=('Low','Medium','High'))
-    sb.place(relx=.2, rely=.7, anchor="c")
-    sb.insert(END, 'Quality')
+    sb.place(relx=.2, rely=.83, anchor="c")
     
-
-    #button2.grid(row=1)
-    #e1.grid(row=2)
-    #button3.grid(row=3)
-    #e1.grid(row=4)
-
+   
     # ola = convert_message_to_binary("sdfsd")
     #print ola
 
