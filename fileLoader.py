@@ -37,13 +37,13 @@ def convert_bits_text(bits, encoding='utf-8', errors='surrogatepass'):
         chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
     return ''.join(chars)
 
-filename = "ccsetup512.exe"
+filename = "LennaS.jpg"
 hex = open_file(filename)
 print current_file_size_bytes
 print "DONE-1"
-# binary = hex_to_binary(hex)
-# print "DONE-2"
-# newfile = convert_bits_text(binary)
-# print "DONE-3"
-# save_file("a"+filename, newfile)
-# print "DONE-4"
+binary = hex_to_binary(hex)
+print binary
+newfile = convert_bits_text(binary)
+print "DONE-3"
+save_file("a"+filename, newfile)
+print "DONE-4"
