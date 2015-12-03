@@ -56,7 +56,7 @@ def open_image(file_name, lsbs):
     image_theoretical_max_size = get_image_theoretical_max_available_size(Red, Green, Blue, lsbs)
 
     print "image theoretical max available size = " + str(image_theoretical_max_size/8) + " KBytes"
-    return image
+    #return image
 
 
     #out = Image.merge("RGB", (r, g, b))
@@ -93,7 +93,7 @@ def utf8_to_bin(text):
 
 
 def bin_to_utf8(bits):
-    ('%x' % int(bits, 2)).decode('hex').decode('utf-8')
+    return ('%x' % int(bits, 2)).decode('hex').decode('utf-8')
 
 def byte_to_binary(n):
     return ''.join(str((n & (1 << i)) and 1) for i in reversed(range(8)))
@@ -228,7 +228,7 @@ def check_bound(i, j):
         j+=1
     return i, j
 
-def hide_metadata(size, file_name, lsb):
+def hide_metadata(file_size, file_name_size, lsb):
     global FILE_SIZE_HEADER_BITS
     global METADATA_LSB
     global FILE_NAME_SIZE_HEADER_BITS
@@ -236,13 +236,13 @@ def hide_metadata(size, file_name, lsb):
     i = 0
     j = 0
 
-    print "Data size = " + str(size)
-    message_size_bin = convert_decimal_binary(size)
+    print "Data size = " + str(file_size)
+    message_size_bin = convert_decimal_binary(file_size)
     message_size_bin_padd = add_padding(message_size_bin, FILE_SIZE_HEADER_BITS)
     #print "Data size bin = " + str(message_size_bin_padd)
 
-    print "file_name_size = " + str(len(utf8_to_bin(file_name)))
-    file_name_size_bin = convert_decimal_binary(len(utf8_to_bin(file_name)))
+    print "file_name_size = " + str(file_name_size)
+    file_name_size_bin = convert_decimal_binary(file_name_size)
     file_name_size_bin_padd = add_padding(file_name_size_bin, FILE_NAME_SIZE_HEADER_BITS)
     #print "file_name_size_bin = " + str(file_name_size_bin_padd)
 
@@ -274,9 +274,18 @@ def hide_file(file_name, lsb):
         raise ValueError('Image to small for current selected file, try to change LSB value')
 
     binary = hex_to_binary(file_hex)
+
+
+    while len(binary)%lsb != 0:
+        binary = binary+"0"
+
     binary_list = list(binary)
 
+
     bin_file_name = utf8_to_bin(file_name)
+    while len(bin_file_name)%lsb != 0:
+        bin_file_name =  "0"+bin_file_name
+
 
     global Red
     global Green
@@ -289,7 +298,7 @@ def hide_file(file_name, lsb):
     # print dctBlue
 
     print "File has "+str(len(binary)/8)+" Bytes"
-    i, j = hide_metadata(len(binary), file_name, lsb)
+    i, j = hide_metadata(len(binary), len(bin_file_name), lsb)
     i, j = write_bits(list(bin_file_name), lsb, i, j)
     i, j = check_bound(i, j)
     i, j = write_bits(binary_list, lsb, i, j)
@@ -363,17 +372,20 @@ def extract_metadata():
     print int(file_name_size, 2)
     print lsb
     print int(lsb, 2)
-
-    return i, j
+    return i, j, int(bin_size, 2), int(file_name_size, 2), int(lsb, 2)
 
 def extract(file_name):
     global Red
     global Green
     global Blue
     open_image(file_name, 0)
-    extract_metadata()
+    i, j, bin_size, file_name_size, lsb = extract_metadata()
+    file_name_bin, i, j = read_bits(i, j, lsb, file_name_size)
+    print bin_to_utf8(''.join(file_name_bin))
+    #i, j = check_bound(i, j)
+    #file_name_bin, i, j = read_bits(i, j, lsb, bin_size)
 
-a = 0
+
 lsbs = 4
 open_image("Lenna.jpg", lsbs)
 print "------------------"

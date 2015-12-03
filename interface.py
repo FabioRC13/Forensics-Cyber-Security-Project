@@ -47,11 +47,11 @@ def onSaveAs():
 def setImage(img):
     global current_full_size_image
     current_full_size_image = img
-    #l, h = img.size
+    l, h = img.size
     #print l, h
     #print int(250), float(250) / float(l)
-    #img_resize = img.resize((int(250), int((float(250) / float(l)) * h)), Image.ANTIALIAS)
-    img_resize = img.resize((int(150), int(150)), Image.ANTIALIAS)
+    img_resize = img.resize((int(250), int((float(250) / float(l)) * h)), Image.ANTIALIAS)
+    #img_resize = img.resize((int(150), int(150)), Image.ANTIALIAS)
 
     photo = ImageTk.PhotoImage(img_resize)
     label1.configure(image=photo)
