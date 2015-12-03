@@ -179,7 +179,6 @@ def write_bits(bits_list, lsb, i, j):
     last = False
     total_bits = len(bits_list)
     count = 0
-    print bits_list
     while i < line_size:
         while j < column_size:
             if count < total_bits:
@@ -187,31 +186,30 @@ def write_bits(bits_list, lsb, i, j):
                 binImgR = convert_decimal_binary(int(Red[i][j]))
                 binImgG = convert_decimal_binary(int(Green[i][j]))
                 binImgB = convert_decimal_binary(int(Blue[i][j]))
-                print "Antes: "+ binImgR
+                #print "Antes: "+ binImgR + " - " +str(int(Red[i][j]))
                 Red[i][j] = int(""+binImgR[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
-                print "Depoi: " +binImgR[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                #print "Depoi: " +binImgR[:-lsb] + ''.join(bits_list[count:count+lsb])
                 count += lsb
                 if count == total_bits:
                     last = True
                     break
 
-                print "Antes: "+ binImgG
+                #print "Antes: "+ binImgG + " - " +str(int(Green[i][j]))
                 Green[i][j] = int(""+binImgG[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
-                print "Depoi: " +binImgG[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                #print "Depoi: " +binImgG[:-lsb] + ''.join(bits_list[count:count+lsb])
                 count += lsb
                 if count == total_bits:
                     last = True
                     break
 
-                print "Antes: "+ binImgB
+                #print "Antes: "+ binImgB + " - " + str(int(Blue[i][j]))
                 Blue[i][j] = int(""+binImgB[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
-                print "Depoi: " +binImgB[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                #print "Depoi: " +binImgB[:-lsb] + ''.join(bits_list[count:count+lsb])
                 count += lsb
                 if count == total_bits:
                     last = True
                     break
                 j+=1
-                print "///////////"
             else:
                 last = True
                 break
@@ -221,6 +219,14 @@ def write_bits(bits_list, lsb, i, j):
         j=0
     return i, j
 
+def check_bound(i, j):
+    column_size = Red.shape[1] - 1
+    if(j == column_size):
+        i+=1
+        j=0
+    else:
+        j+=1
+    return i, j
 
 def hide_metadata(size, file_name, lsb):
     global FILE_SIZE_HEADER_BITS
@@ -233,17 +239,17 @@ def hide_metadata(size, file_name, lsb):
     print "Data size = " + str(size)
     message_size_bin = convert_decimal_binary(size)
     message_size_bin_padd = add_padding(message_size_bin, FILE_SIZE_HEADER_BITS)
-    print "Data size bin = " + str(message_size_bin_padd)
+    #print "Data size bin = " + str(message_size_bin_padd)
 
     print "file_name_size = " + str(len(utf8_to_bin(file_name)))
     file_name_size_bin = convert_decimal_binary(len(utf8_to_bin(file_name)))
     file_name_size_bin_padd = add_padding(file_name_size_bin, FILE_NAME_SIZE_HEADER_BITS)
-    print "file_name_size_bin = " + str(file_name_size_bin_padd)
+    #print "file_name_size_bin = " + str(file_name_size_bin_padd)
 
     print "LSB_size = " + str(lsb)
     LSB_size_bin = convert_decimal_binary(lsb)
     LSB_size_bin_padd = add_padding(LSB_size_bin, LSB_SIZE_BITS)
-    print "LSB_size_bin_padd = " + str(LSB_size_bin_padd)
+    #print "LSB_size_bin_padd = " + str(LSB_size_bin_padd)
 
     message_size_bin_padd_list = list(message_size_bin_padd)
     file_name_size_bin_padd_list = list(file_name_size_bin_padd)
@@ -251,8 +257,11 @@ def hide_metadata(size, file_name, lsb):
 
 
     i, j = write_bits(message_size_bin_padd_list, METADATA_LSB, i, j)
+    i, j = check_bound(i, j)
     i, j = write_bits(file_name_size_bin_padd_list, METADATA_LSB, i, j)
+    i, j = check_bound(i, j)
     i, j = write_bits(LSB_size_bin_padd_list, METADATA_LSB, i, j)
+    i, j = check_bound(i, j)
 
     return i, j
 
@@ -281,10 +290,10 @@ def hide_file(file_name, lsb):
 
     print "File has "+str(len(binary)/8)+" Bytes"
     i, j = hide_metadata(len(binary), file_name, lsb)
-
-    #i, j = write_bits(list(bin_file_name), lsb, i, j)
-
-    #i, j = write_bits(binary_list, lsb, i, j)
+    i, j = write_bits(list(bin_file_name), lsb, i, j)
+    i, j = check_bound(i, j)
+    i, j = write_bits(binary_list, lsb, i, j)
+    i, j = check_bound(i, j)
 
 
 
@@ -338,8 +347,11 @@ def read_bits(i, j, lsb, bits_size):
 def extract_metadata():
 
     file_size_bin, i, j = read_bits(0, 0, METADATA_LSB, FILE_SIZE_HEADER_BITS)
+    i, j = check_bound(i, j)
     file_name_size_bin, i, j = read_bits(i, j, METADATA_LSB, FILE_NAME_SIZE_HEADER_BITS)
+    i, j = check_bound(i, j)
     lsb_bin, i, j = read_bits(i, j, METADATA_LSB, LSB_SIZE_BITS)
+    i, j = check_bound(i, j)
 
     bin_size = ''.join(file_size_bin)
     file_name_size = ''.join(file_name_size_bin)
@@ -351,6 +363,8 @@ def extract_metadata():
     print int(file_name_size, 2)
     print lsb
     print int(lsb, 2)
+
+    return i, j
 
 def extract(file_name):
     global Red
