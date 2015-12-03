@@ -7,7 +7,7 @@ import tkFileDialog
 import tkMessageBox
 import numpy as np
 from PIL import Image, ImageTk
-import LSB
+import DCT
 
 current_full_size_image = None
 
@@ -27,8 +27,8 @@ def onOpen():
     fn = filename
     #print fn #prints filename with path here
     img = Image.open(fn)
-    LSB.set_image(img)
     setImage(img)
+    DCT.open_image(img,4)  #ALTERAR DEPOIS A SPINBOX
 
 def onSaveAs():
     ftypes = [
@@ -47,28 +47,24 @@ def onSaveAs():
 def setImage(img):
     global current_full_size_image
     current_full_size_image = img
-    l, h = img.size
-    #print l, h
-    #print int(250), float(250) / float(l)
-    img_resize = img.resize((int(250), int((float(250) / float(l)) * h)), Image.ANTIALIAS)
+    img_resize = img.resize((int(150), int((float(150) / float(l)) * h)), Image.ANTIALIAS)
     #img_resize = img.resize((int(150), int(150)), Image.ANTIALIAS)
 
     photo = ImageTk.PhotoImage(img_resize)
     label1.configure(image=photo)
     label1.image = photo  # keep a reference!
 
-def donothing():
-    filewin = Toplevel(master)
-    button = Button(filewin, text="Do nothing button")
-    button.pack()
+
 
 def onOpenFile():
-    # Open Callback
-    ftypes = [('All Files', '*.jpg')]     #MUDAR ISTO DEPOIS
-    dlg = tkFileDialog.Open(filetypes=ftypes)
+    # Open Callback 
+    global filename
+
+    dlg = tkFileDialog.Open()
     filename = dlg.show()
     e1.delete(0,END)
     e1.insert(0,filename)
+    return filename
 
 
 def dialog_box(msg):
@@ -78,16 +74,16 @@ def hide_procedure():
     global current_full_size_image
     message = e1.get()
     if message == "":
-        dialog_box("Please write your message")
+        dialog_box("Please choose a file")
         return
-    #if current_full_size_image equal None:
-        #dialog_box("No image selected")
-        #return
 
     print e1.get()
-    LSB.hide_message(current_full_size_image, e1.get())
+    hide_img = DCT.hide_file(filename, 4)   #ALTERAR COM A SPINBOX
     dialog_box("DONE")
-    setImage(LSB.img)
+
+    label1.configure(image=hide_img)
+    label1.image = hide_img  # keep a reference!
+
 
 def extract_message():
     global current_full_size_image
@@ -116,32 +112,7 @@ def intitGui():
     ############################## Tool Bar ################################
     menubar = Menu(master)
     master.config(menu=menubar)
-    
-    ##### EM CASO DE NAO GOSTAREM DAS ALTERACOES #####
-
-    #filemenu.add_command(label="Open", command=onOpen)
-    #filemenu.add_command(label="Save as...", command=onSaveAs)
-    #filemenu.add_command(label="Close", command=master.quit)
-    #filemenu.add_separator()
-
-    #filemenu.add_command(label="Exit", command=master.quit)
-    #menubar.add_cascade(label="File", menu=filemenu)
-    #editmenu = Menu(menubar, tearoff=0)
-    #editmenu.add_command(label="Undo", command=donothing)
-    #editmenu.add_separator()
-
-    #editmenu.add_command(label="Cut", command=donothing)
-    #editmenu.add_command(label="Copy", command=donothing)
-    #editmenu.add_command(label="Paste", command=donothing)
-    #editmenu.add_command(label="Delete", command=donothing)
-    #editmenu.add_command(label="Select All", command=donothing)
-    #menubar.add_cascade(label="Edit", menu=editmenu)
-
-    #helpmenu = Menu(menubar, tearoff=0)
-    #helpmenu.add_command(label="Help Index", command=donothing)
-    #helpmenu.add_command(label="About...", command=donothing)
-    #menubar.add_cascade(label="Help", menu=helpmenu)
-
+   
     imagemenu = Menu(menubar, tearoff=0)
     imagemenu.add_command(label="Open", command=onOpen)
     imagemenu.add_command(label="Save as...", command=onSaveAs)
@@ -163,7 +134,7 @@ def intitGui():
     helpmenu = Menu(menubar, tearoff=0)
     helpmenu.add_command(label="About...", command=about_box)
     helpmenu.add_separator()
-    helpmenu.add_command(label="Manual", command=donothing)
+    helpmenu.add_command(label="Manual")
     menubar.add_cascade(label="Help", menu=helpmenu)
 
 
@@ -179,7 +150,7 @@ def intitGui():
     label2 = Tkinter.Label()
     label2.place(relx=.7, rely=.4, anchor="c")
     
-    button1 = Button(master, text="Select the image", command=onOpen)
+    button1 = Button(master, text="Select the image", bg='blue', command=onOpen)
     button2 = Button(master, text='Hide your file', command=hide_procedure)
     button3 = Button(master, text='Extract file',  command=extract_message)
     button4 = Button(master, text='Save result', command=onSaveAs)
