@@ -42,7 +42,7 @@ hex = open_file(filename)
 print current_file_size_bytes
 print "DONE-1"
 binary = hex_to_binary(hex)
-print binary
+print len(binary)
 newfile = convert_bits_text(binary)
 print "DONE-3"
 save_file("a"+filename, newfile)
