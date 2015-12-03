@@ -10,6 +10,8 @@ from PIL import Image, ImageTk
 import DCT
 
 current_full_size_image = None
+filename = ""
+sb = None
 
 def startGUI():
     global master
@@ -24,11 +26,13 @@ def onOpen():
     ftypes = [('Image Files', '*.tif *.jpg *.png')]
     dlg = tkFileDialog.Open(filetypes=ftypes)
     filename = dlg.show()
-    fn = filename
-    #print fn #prints filename with path here
-    img = Image.open(fn)
-    setImage(img)
-    DCT.open_image(img,4)  #ALTERAR DEPOIS A SPINBOX
+
+    img = Image.open(filename)
+    setImage(img,1)
+
+    lsb = setQuality()
+
+    DCT.open_image(filename,lsb)  
 
 def onSaveAs():
     ftypes = [
@@ -44,26 +48,30 @@ def onSaveAs():
 
 
 
-def setImage(img):
+def setImage(img, label):
     global current_full_size_image
     current_full_size_image = img
+
+    l,h = img.size
     img_resize = img.resize((int(150), int((float(150) / float(l)) * h)), Image.ANTIALIAS)
-    #img_resize = img.resize((int(150), int(150)), Image.ANTIALIAS)
-
-    photo = ImageTk.PhotoImage(img_resize)
-    label1.configure(image=photo)
-    label1.image = photo  # keep a reference!
-
+   
+    if label == 1: 
+    	photo = ImageTk.PhotoImage(img_resize)
+    	label1.configure(image=photo)
+    	label1.image = photo  # keep a reference!
+    elif label == 2: 
+    	photo = ImageTk.PhotoImage(img_resize)
+    	label2.configure(image=photo)
+    	label2.image = photo  # keep a reference!
 
 
 def onOpenFile():
     # Open Callback 
     global filename
-
+    
     dlg = tkFileDialog.Open()
     filename = dlg.show()
-    e1.delete(0,END)
-    e1.insert(0,filename)
+    
     return filename
 
 
@@ -71,28 +79,41 @@ def dialog_box(msg):
     tkMessageBox.showwarning("Warning", msg)
 
 def hide_procedure():
-    global current_full_size_image
-    message = e1.get()
-    if message == "":
+
+    if filename == "":
         dialog_box("Please choose a file")
         return
 
-    print e1.get()
-    hide_img = DCT.hide_file(filename, 4)   #ALTERAR COM A SPINBOX
+    lsb = setQuality()
+    
+    hide_img = DCT.hide_file(filename, lsb)   
     dialog_box("DONE")
 
-    label1.configure(image=hide_img)
-    label1.image = hide_img  # keep a reference!
+    setImage(hide_img,2)
 
 
 def extract_message():
-    global current_full_size_image
-    message = LSB.extract_message(current_full_size_image)
-    print message
-    dialog_box(message)
+    #ACABAR
+    message = DCT.extract(filename)
+  
+
+
+def setQuality():
+    quality_value = sb.get()
+    if quality_value=="Low":
+    	lsb = 1
+    elif quality_value=="Medium":
+    	lsb = 2
+    elif quality_value=="High":
+    	lsb = 3
+
+    return lsb
+
 
 def about_box():
     tkMessageBox.showinfo(title="About", message="Skryvat V1.0\nAuthors:\nFabio Carvalho\nPedro Dias\nCarlos Ribeiro\nIP: Tecnico Lisboa\nRelease: 5 December 2015\nLast Update: 5 December 2015")
+
+
     ############################## Interface Code ################################
 
 
@@ -150,11 +171,11 @@ def intitGui():
     label2 = Tkinter.Label()
     label2.place(relx=.7, rely=.4, anchor="c")
     
-    button1 = Button(master, text="Select the image", bg='blue', command=onOpen)
-    button2 = Button(master, text='Hide your file', command=hide_procedure)
-    button3 = Button(master, text='Extract file',  command=extract_message)
-    button4 = Button(master, text='Save result', command=onSaveAs)
-    button5 = Button(master, text='Choose file to hide', command=onOpenFile)
+    button1 = Button(master, text="Select the image", border=0, command=onOpen)
+    button2 = Button(master, text='Hide your file', border=0, command=hide_procedure)
+    button3 = Button(master, text='Extract file',  border=0, command=extract_message)
+    button4 = Button(master, text='Save result', border=0,command=onSaveAs)
+    button5 = Button(master, text='Choose file to hide', border=0, command=onOpenFile)
     e1 = Entry(master)
 
     button1.place(relx=.3, rely=.6, anchor="c")
@@ -162,10 +183,14 @@ def intitGui():
     button3.place(relx=.8, rely=.9, anchor="c")
     button4.place(relx=.7, rely=.6, anchor="c")
     button5.place(relx=.5, rely=.8, anchor="c")
-    e1.place(relx=.5, rely=.9, anchor="c")
+    e1.place(relx=.2, rely=.9, anchor="c")
+
+    #e1.delete(0,END)
+    #e1.insert(0,FRASE DE TAMNHO DISPONIVEL)
+
 
     global sb 
-    sb = Spinbox(master, values=('Low','Medium','High'))
+    sb = Spinbox(master, border=0, values=('Low','Medium','High'))
     sb.place(relx=.2, rely=.83, anchor="c")
     
    
