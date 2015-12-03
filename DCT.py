@@ -53,7 +53,7 @@ def open_image(file_name, lsbs):
     #Green = get_2D_dct(imgG)
     #Blue = get_2D_dct(imgB)
 
-    image_theoretical_max_size = get_image_theoretical_max_available_size(Red, Green, Blue, lsbs)
+    image_theoretical_max_size = get_image_theoretical_max_available_size(lsbs)
 
     print "image theoretical max available size = " + str(image_theoretical_max_size/8) + " KBytes"
     #return image
@@ -64,8 +64,12 @@ def open_image(file_name, lsbs):
     #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
 
-def get_image_theoretical_max_available_size(R, G, B, LSB_size):
-    return ((R.shape[0] * R.shape[1] * LSB_size)/8) + ((G.shape[0] * G.shape[1] * LSB_size)/8) + ((B.shape[0] * B.shape[1] * LSB_size)/8)
+def get_image_theoretical_max_available_size(LSB_size):
+    global Red
+    global Green
+    global Blue
+    return ((Red.shape[0] * Red.shape[1] * LSB_size)/8) + ((Green.shape[0] * Green.shape[1] * LSB_size)/8) \
+           + ((Blue.shape[0] * Blue.shape[1] * LSB_size)/8)
 
  
 
