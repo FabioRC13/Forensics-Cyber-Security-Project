@@ -29,7 +29,18 @@ def onOpen():
 
     img = Image.open(filename)
     setImage(img,1)
-    DCT.open_image(filename,4)  #ALTERAR DEPOIS A SPINBOX
+
+    quality_value = sb.get()
+    if quality_value=="Low":
+    	lsb = 1
+    elif quality_value=="Medium":
+    	lsb = 2
+    elif quality_value=="High":
+    	lsb = 3
+
+   	print quality_value
+
+    DCT.open_image(filename,lsb)  #ALTERAR DEPOIS A SPINBOX
 
 def onSaveAs():
     ftypes = [
@@ -91,12 +102,12 @@ def hide_procedure():
     quality_value = sb.get()
     if quality_value=="Low":
     	lsb = 1
-   	elif quality_value=="Medium"
-   		lsb = 2
-   	elif quality_value=="High"
-   		lsb = 3
+    elif quality_value=="Medium":
+    	lsb = 2
+    elif quality_value=="High":
+    	lsb = 3
 
-   	print quality_value
+    print quality_value
 
     hide_img = DCT.hide_file(filename, lsb)   #ALTERAR COM A SPINBOX
     dialog_box("DONE")
