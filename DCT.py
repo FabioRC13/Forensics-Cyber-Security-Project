@@ -13,15 +13,15 @@ import struct
 
 current_file_size_bytes = 0
 image_theoretical_max_size = 0
-dctRed = None
-dctGreen = None
-dctBlue = None
+Red = None
+Green = None
+Blue = None
 
 #Metadata specifications
 FILE_SIZE_HEADER_BITS = 32
 FILE_NAME_SIZE_HEADER_BITS = 16
 LSB_SIZE_BITS = 8
-METADATA_LSB = 4
+METADATA_LSB = 2
 
 #Convert a decimal number to binary
 def convert_decimal_binary(value):
@@ -37,25 +37,25 @@ def convert_decimal_binary(value):
 
 
 def open_image(file_name, lsbs):
-    global dctRed
-    global dctGreen
-    global dctBlue
+    global Red
+    global Green
+    global Blue
     global image_theoretical_max_size
     image = Image.open(file_name).convert('RGB')
     r, g, b = image.split()
 
-    imgR = numpy.array(r, dtype=numpy.float)
-    imgG = numpy.array(g, dtype=numpy.float)
-    imgB = numpy.array(b, dtype=numpy.float)
+    Red = numpy.array(r, dtype=numpy.float)
+    Green = numpy.array(g, dtype=numpy.float)
+    Blue = numpy.array(b, dtype=numpy.float)
 
     #Conversao dos DCT
-    dctRed = get_2D_dct(imgR)
-    dctGreen = get_2D_dct(imgG)
-    dctBlue = get_2D_dct(imgB)
+    #Red = get_2D_dct(imgR)
+    #Green = get_2D_dct(imgG)
+    #Blue = get_2D_dct(imgB)
 
-    image_theoretical_max_size = get_image_theoretical_max_size(dctRed, dctGreen, dctBlue, lsbs)
+    image_theoretical_max_size = get_image_theoretical_max_available_size(Red, Green, Blue, lsbs)
 
-    print "image_theoretical_max_size = " + str(image_theoretical_max_size) + " Bytes"
+    print "image theoretical max available size = " + str(image_theoretical_max_size/8) + " KBytes"
     return image
 
 
@@ -64,24 +64,20 @@ def open_image(file_name, lsbs):
     #print numpy.array(r, dtype=numpy.float)
     #img_color = image.resize(size, 1)
 
-def get_image_theoretical_max_size(dctR, dctG, dctB, LSB_size):
-    size_matrixR = dctR.shape[0]
-    size_matrixG = dctG.shape[0]
-    size_matrixB = dctB.shape[0]
-    return ((size_matrixR * size_matrixR * LSB_size)/8) + ((size_matrixG * size_matrixG * LSB_size)/8) + \
-           ((size_matrixB * size_matrixB * LSB_size)/8)
+def get_image_theoretical_max_available_size(R, G, B, LSB_size):
+    return ((R.shape[0] * R.shape[1] * LSB_size)/8) + ((G.shape[0] * G.shape[1] * LSB_size)/8) + ((B.shape[0] * B.shape[1] * LSB_size)/8)
 
  
 
-def get_2D_dct(img):
-    """ Get 2D Cosine Transform of Image
-    """
-    return fftpack.dct(fftpack.dct(img.T, norm='ortho').T, norm='ortho')
-
-def get_2d_idct(coefficients):
-    """ Get 2D Inverse Cosine Transform of Image
-    """
-    return fftpack.idct(fftpack.idct(coefficients.T, norm='ortho').T, norm='ortho')
+# def get_2D_dct(img):
+#     """ Get 2D Cosine Transform of Image
+#     """
+#     return fftpack.dct(fftpack.dct(img.T, norm='ortho').T, norm='ortho')
+#
+# def get_2d_idct(coefficients):
+#     """ Get 2D Inverse Cosine Transform of Image
+#     """
+#     return fftpack.idct(fftpack.idct(coefficients.T, norm='ortho').T, norm='ortho')
 
 def open_file(filename):
     global current_file_size_bytes
@@ -172,40 +168,50 @@ def convert_message_to_binary(message):
 
 def message_sliced(data_bin_list, lsb):
     data_aux = data_bin_list[0:lsb]
-    print data_bin_list
     del data_bin_list[0:lsb]
-    print data_bin_list
-    print "data_aux" + ''.join(data_aux)
     if len(data_aux) != lsb:
         raise ValueError('Bits are over')
     return ''.join(data_aux)
 
 def write_bits(bits_list, lsb, i, j):
-    size = dctRed.shape[0]
-    line_size = size - 1
-    column_size = size - 1
+    line_size = Red.shape[0] - 1
+    column_size = Red.shape[1] - 1
     last = False
+    total_bits = len(bits_list)
+    count = 0
+    print bits_list
     while i < line_size:
         while j < column_size:
-            if len(bits_list) > 0:
-                binImgR = float_to_bin(dctRed[i][j])
-                binImgG = float_to_bin(dctGreen[i][j])
-                binImgB = float_to_bin(dctBlue[i][j])
-                try:
-                    print "Antes - "+str(float_to_bin(dctRed[i][j]))
-                    dctRed[i][j] = bin_to_float(binImgR[:-lsb] + message_sliced(bits_list, lsb))
-                    print "Depoi - "+str(float_to_bin(dctRed[i][j]))
-                except:
-                    pass
-                try:
-                    dctGreen[i][j] = bin_to_float(binImgG[:-lsb] + message_sliced(bits_list, lsb))
-                except:
-                    pass
-                try:
-                    dctBlue[i][j] = bin_to_float(binImgB[:-lsb] + message_sliced(bits_list, lsb))
-                except:
-                    pass
+            if count < total_bits:
+
+                binImgR = convert_decimal_binary(int(Red[i][j]))
+                binImgG = convert_decimal_binary(int(Green[i][j]))
+                binImgB = convert_decimal_binary(int(Blue[i][j]))
+                print "Antes: "+ binImgR
+                Red[i][j] = int(""+binImgR[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
+                print "Depoi: " +binImgR[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                count += lsb
+                if count == total_bits:
+                    last = True
+                    break
+
+                print "Antes: "+ binImgG
+                Green[i][j] = int(""+binImgG[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
+                print "Depoi: " +binImgG[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                count += lsb
+                if count == total_bits:
+                    last = True
+                    break
+
+                print "Antes: "+ binImgB
+                Blue[i][j] = int(""+binImgB[:-lsb] + ''.join(bits_list[count:count+lsb]), 2)
+                print "Depoi: " +binImgB[:-lsb] + "+" +''.join(bits_list[count:count+lsb])
+                count += lsb
+                if count == total_bits:
+                    last = True
+                    break
                 j+=1
+                print "///////////"
             else:
                 last = True
                 break
@@ -216,7 +222,7 @@ def write_bits(bits_list, lsb, i, j):
     return i, j
 
 
-def hide_metadata(size, file_name):
+def hide_metadata(size, file_name, lsb):
     global FILE_SIZE_HEADER_BITS
     global METADATA_LSB
     global FILE_NAME_SIZE_HEADER_BITS
@@ -224,16 +230,20 @@ def hide_metadata(size, file_name):
     i = 0
     j = 0
 
-    print "size = " + str(size)
+    print "Data size = " + str(size)
     message_size_bin = convert_decimal_binary(size)
     message_size_bin_padd = add_padding(message_size_bin, FILE_SIZE_HEADER_BITS)
-    print "size2 = " + str(message_size_bin_padd)
+    print "Data size bin = " + str(message_size_bin_padd)
 
+    print "file_name_size = " + str(len(utf8_to_bin(file_name)))
     file_name_size_bin = convert_decimal_binary(len(utf8_to_bin(file_name)))
     file_name_size_bin_padd = add_padding(file_name_size_bin, FILE_NAME_SIZE_HEADER_BITS)
+    print "file_name_size_bin = " + str(file_name_size_bin_padd)
 
-    LSB_size_bin = convert_decimal_binary(METADATA_LSB)
+    print "LSB_size = " + str(lsb)
+    LSB_size_bin = convert_decimal_binary(lsb)
     LSB_size_bin_padd = add_padding(LSB_size_bin, LSB_SIZE_BITS)
+    print "LSB_size_bin_padd = " + str(LSB_size_bin_padd)
 
     message_size_bin_padd_list = list(message_size_bin_padd)
     file_name_size_bin_padd_list = list(file_name_size_bin_padd)
@@ -259,9 +269,9 @@ def hide_file(file_name, lsb):
 
     bin_file_name = utf8_to_bin(file_name)
 
-    global dctRed
-    global dctGreen
-    global dctBlue
+    global Red
+    global Green
+    global Blue
 
     # print dctRed
     # print "===="
@@ -270,10 +280,12 @@ def hide_file(file_name, lsb):
     # print dctBlue
 
     print "File has "+str(len(binary)/8)+" Bytes"
-    i, j = hide_metadata(len(binary), file_name)
+    i, j = hide_metadata(len(binary), file_name, lsb)
 
-    i, j = write_bits(list(bin_file_name), lsb, i, j)
-    i, j = write_bits(binary_list, lsb, i, j)
+    #i, j = write_bits(list(bin_file_name), lsb, i, j)
+
+    #i, j = write_bits(binary_list, lsb, i, j)
+
 
 
 
@@ -285,41 +297,34 @@ def hide_file(file_name, lsb):
     # print "===="
     # print dctBlue
     #print '{0:.64f}'.format(dctBlue[5][8])
-    a=get_reconstructed_image(get_2d_idct(dctRed))
-    b=get_reconstructed_image(get_2d_idct(dctGreen))
-    c=get_reconstructed_image(get_2d_idct(dctBlue))
+    a=get_reconstructed_image(Red)
+    b=get_reconstructed_image(Green)
+    c=get_reconstructed_image(Blue)
     return Image.merge("RGB", (a, b, c))
 
-def extract_metadata():
-    file_size_bin = list()
-    file_name_size_bin = list()
-    lsb_bin = list()
-
-    i = 0
-    j = 0
-    size = dctRed.shape[0]
-    line_size = size - 1
-    column_size = size - 1
+def read_bits(i, j, lsb, bits_size):
+    result = list()
+    line_size = Red.shape[0] - 1
+    column_size = Red.shape[1] - 1
     last = False
     while i < line_size:
         while j < column_size:
 
-            binImgR = float_to_bin(dctRed[i][j])
-            binImgG = float_to_bin(dctGreen[i][j])
-            binImgB = float_to_bin(dctBlue[i][j])
-
-            file_size_bin.append(binImgR[-METADATA_LSB:])
-            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+            binImgR = convert_decimal_binary(int(Red[i][j]))
+            binImgG = convert_decimal_binary(int(Green[i][j]))
+            binImgB = convert_decimal_binary(int(Blue[i][j]))
+            result.append(binImgR[-lsb:])
+            if len(result)*lsb == bits_size:
                 last = True
                 break
 
-            file_size_bin.append(binImgG[-METADATA_LSB:])
-            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+            result.append(binImgG[-lsb:])
+            if len(result)*lsb == bits_size:
                 last = True
                 break
 
-            file_size_bin.append(binImgB[-METADATA_LSB:])
-            if len(file_size_bin)*METADATA_LSB == FILE_SIZE_HEADER_BITS:
+            result.append(binImgB[-lsb:])
+            if len(result)*lsb == bits_size:
                 last = True
                 break
             j+=1
@@ -328,37 +333,40 @@ def extract_metadata():
             break
         i+=1
         j=0
-    print file_size_bin
-    bin_size = ''.join(file_size_bin)
-    print bin_size
-    print int(bin_size, 2)/8
+    return result, i, j
 
-def extract_message(file_name):
-    global dctRed
-    global dctGreen
-    global dctBlue
-    print float_to_bin(dctBlue[0][1])
+def extract_metadata():
+
+    file_size_bin, i, j = read_bits(0, 0, METADATA_LSB, FILE_SIZE_HEADER_BITS)
+    file_name_size_bin, i, j = read_bits(i, j, METADATA_LSB, FILE_NAME_SIZE_HEADER_BITS)
+    lsb_bin, i, j = read_bits(i, j, METADATA_LSB, LSB_SIZE_BITS)
+
+    bin_size = ''.join(file_size_bin)
+    file_name_size = ''.join(file_name_size_bin)
+    lsb = ''.join(lsb_bin)
+
+    print bin_size
+    print int(bin_size, 2)
+    print file_name_size
+    print int(file_name_size, 2)
+    print lsb
+    print int(lsb, 2)
+
+def extract(file_name):
+    global Red
+    global Green
+    global Blue
     open_image(file_name, 0)
     extract_metadata()
 
-  #extrai os dcts
-    #extrair a metadata
-    #extrair os bits menos significativos de cada dct 
-    #assemblar todos 
-    #imprimir a mensagem
-
-
-
-
-
-lsbs = 55
+a = 0
+lsbs = 4
 open_image("Lenna.jpg", lsbs)
-print float_to_bin(dctBlue[0][1])
+print "------------------"
 out = hide_file("LennaS.jpg", lsbs)
-print float_to_bin(dctBlue[0][1])
-out.save("final.png")
+out.save("final.png", "PNG")
 print "=============="
-extract_message("final.png")
+extract("final.png")
 
 
 
