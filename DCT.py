@@ -405,17 +405,18 @@ def extract(file_name):
     print "=============="
     file_bin, i, j = read_bits(i, j, lsb, bin_size)
     newfile = convert_bits_text(''.join(file_bin))
-    save_file("a"+file_namef, newfile)
+    #save_file("a"+file_namef, newfile)
+    return newfile, file_namef
 
 
 lsbs = 1
-open_image("photo.png", lsbs)
+open_image("Hubble.jpg", lsbs)
 print "------------------"
-out = hide_file("LennaS.jpg", lsbs)
+out = hide_file("Lenna.jpg", lsbs)
 out.save("final.png", "PNG")
 print "=============="
-extract("final.png")
-
+newFile, file_name = extract("final.png")
+save_file("a"+file_name, newFile)
 
 
 
