@@ -276,8 +276,8 @@ def hide_file(file_name, lsb):
     binary = hex_to_binary(file_hex)
 
 
-    while len(binary)%lsb != 0:
-        binary = binary+"0"
+    #while len(binary)%lsb != 0:
+        #binary = binary+"0"
 
     binary_list = list(binary)
 
@@ -327,10 +327,13 @@ def read_bits(i, j, lsb, bits_size):
     last = False
     while i < line_size:
         while j < column_size:
-
+            a = len(result)*lsb
             binImgR = convert_decimal_binary(int(Red[i][j]))
+            binImgR = add_padding(binImgR, 8)
             binImgG = convert_decimal_binary(int(Green[i][j]))
+            binImgG = add_padding(binImgG, 8)
             binImgB = convert_decimal_binary(int(Blue[i][j]))
+            binImgB = add_padding(binImgB, 8)
             result.append(binImgR[-lsb:])
             if len(result)*lsb == bits_size:
                 last = True
@@ -374,6 +377,18 @@ def extract_metadata():
     print int(lsb, 2)
     return i, j, int(bin_size, 2), int(file_name_size, 2), int(lsb, 2)
 
+def convert_bits_text(bits, encoding='utf-8', errors='surrogatepass'):
+    chars = []
+    for b in range(len(bits) / 8):
+        byte = bits[b * 8:(b + 1) * 8]
+        chars.append(chr(int(''.join([str(bit) for bit in byte]), 2)))
+    return ''.join(chars)
+
+def save_file(filename, fileContent):
+    file = open(filename, "wb")
+    file.write(fileContent)
+    file.close()
+
 def extract(file_name):
     global Red
     global Green
@@ -381,13 +396,16 @@ def extract(file_name):
     open_image(file_name, 0)
     i, j, bin_size, file_name_size, lsb = extract_metadata()
     file_name_bin, i, j = read_bits(i, j, lsb, file_name_size)
-    print bin_to_utf8(''.join(file_name_bin))
-    #i, j = check_bound(i, j)
-    #file_name_bin, i, j = read_bits(i, j, lsb, bin_size)
+    file_namef =  bin_to_utf8(''.join(file_name_bin))
+    i, j = check_bound(i, j)
+    print "=============="
+    file_bin, i, j = read_bits(i, j, lsb, bin_size)
+    newfile = convert_bits_text(''.join(file_bin))
+    save_file("a"+file_namef, newfile)
 
 
-lsbs = 4
-open_image("Lenna.jpg", lsbs)
+lsbs = 1
+open_image("photo.png", lsbs)
 print "------------------"
 out = hide_file("LennaS.jpg", lsbs)
 out.save("final.png", "PNG")
