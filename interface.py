@@ -105,15 +105,15 @@ def hide_procedure():
 
 def extract_message():
     global filename
-    #try:
-    newFile, file_name = DCT.extract(filename)
-    fileName = tkFileDialog.asksaveasfile(parent=master, initialfile=file_name, title="Save the image as...", mode='w')
-    #print fileName.name
-    if fileName != None:
-        DCT.save_file(fileName.name, newFile)
-    #except:
-        #dialog_box("Invalid file selected")
-        #return
+    try:
+        newFile, file_name = DCT.extract(filename)
+        fileName = tkFileDialog.asksaveasfile(parent=master, initialfile=file_name, title="Save the image as...", mode='w')
+        #print fileName.name
+        if fileName != None:
+            DCT.save_file(fileName.name, newFile)
+    except:
+        dialog_box("Invalid file selected")
+        return
     print file_name
 
 
