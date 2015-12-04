@@ -1,5 +1,6 @@
 #!/usr/bin/python
 ############################## Imports #########################################
+import webbrowser
 import Tkinter
 from Tkinter import *
 from tkFileDialog import *
@@ -8,6 +9,7 @@ import tkMessageBox
 import numpy as np
 from PIL import Image, ImageTk
 import LSBv2
+
 
 current_full_size_image = None
 current_recoverd_file = None
@@ -19,6 +21,8 @@ def startGUI():
     master = Tk()
     intitGui()
     master.mainloop()
+
+
 ############################# Functions ########################################
 
 
@@ -45,7 +49,7 @@ def onSaveAs():
     ('JPEG / JFIF','*.jpg'),
     ('CompuServer GIF','*.gif'),
     ]
-    fileName = tkFileDialog.asksaveasfile(parent=master,filetypes=ftypes ,title="Save the image as...", mode='w',defaultextension='.jpg')
+    fileName = tkFileDialog.asksaveasfile(parent=master,filetypes=ftypes ,title="Save the image as...", mode='w',defaultextension='.png')
     global current_full_size_image
     #print fileName.name
     if fileName != None:
@@ -108,7 +112,6 @@ def extract_message():
     try:
         newFile, file_name = LSBv2.extract(filename)
         fileName = tkFileDialog.asksaveasfile(parent=master, initialfile=file_name, title="Save the image as...", mode='w')
-        #print fileName.name
         if fileName != None:
             LSBv2.save_file(fileName.name, newFile)
     except:
@@ -123,7 +126,6 @@ def setQuality():
     quality_value = sb.get()
     if quality_value=="Low":
     	lsb = 1
-        #e1.insert("Available size = " + str(DCT.get_image_theoretical_max_available_size(lsb)/8) + " KBytes")
     elif quality_value=="Medium":
     	lsb = 2
     elif quality_value=="High":
@@ -142,6 +144,11 @@ def onSpinboxChanged(event = None):
         e1.insert(0,"Available size = " + str(LSBv2.get_image_theoretical_max_available_size(lsb)/1024.0) + " KBytes")
     except:
         pass
+
+
+def openManual():
+    webbrowser.open_new('https://www.dropbox.com/s/24gwqr97vav062o/Skryvat%C2%AE%20-Manual.pdf?dl=0')
+    
 
 def about_box():
     tkMessageBox.showinfo(title="About", message="Skryvat V1.0\nAuthors:\nFabio Carvalho\nPedro Dias\nCarlos Ribeiro\nIP: Tecnico Lisboa\nRelease: 5 December 2015\nLast Update: 5 December 2015")
@@ -188,7 +195,7 @@ def intitGui():
     helpmenu = Menu(menubar, tearoff=0)
     helpmenu.add_command(label="About...", command=about_box)
     helpmenu.add_separator()
-    helpmenu.add_command(label="Manual")
+    comand_manual = helpmenu.add_command(label="Manual", command=openManual)
     menubar.add_cascade(label="Help", menu=helpmenu)
 
 
@@ -196,13 +203,13 @@ def intitGui():
 
     global label1 
     global e1
-    global label2    #To put the result image
+    global label2    
     global e2
 
-    label1 = Tkinter.Label()
+    label1 = Tkinter.Label(border=0)
     label1.place(relx=.3, rely=.4, anchor="c") 
 
-    label2 = Tkinter.Label()
+    label2 = Tkinter.Label(border=0)
     label2.place(relx=.7, rely=.4, anchor="c")
 
     
@@ -222,18 +229,11 @@ def intitGui():
     e1.place(relx=.2, rely=.9, anchor="c")
     e2.place(relx=.5, rely=.9, anchor="c")
 
-    #e1.delete(0,END)
-    #e1.insert(0,"sdf")
-
 
     global sb 
     sb = Spinbox(master, border=0, values=('Low','Medium','High','Insane'), command=onSpinboxChanged)
     sb.place(relx=.2, rely=.83, anchor="c")
 
-   
-    # ola = convert_message_to_binary("sdfsd")
-    #print ola
 
-#if __name__ == "__main__":
 
 startGUI()
