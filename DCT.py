@@ -89,6 +89,7 @@ def open_file(filename):
         content = f.read()
     st = os.stat(filename)
     current_file_size_bytes = st.st_size
+    print "Selected file has: " +str(current_file_size_bytes/1024.0)+" KBytes"
     return binascii.hexlify(content)
 
 
@@ -271,8 +272,10 @@ def hide_metadata(file_size, file_name_size, lsb):
 
 def hide_file(file_name, lsb):
     file_hex = open_file(file_name)
-    print image_theoretical_max_size
-    print current_file_size_bytes + ((FILE_SIZE_HEADER_BITS + FILE_NAME_SIZE_HEADER_BITS + LSB_SIZE_BITS)/8)
+
+    global image_theoretical_max_size
+    image_theoretical_max_size = get_image_theoretical_max_available_size(lsb)
+    #print current_file_size_bytes + ((FILE_SIZE_HEADER_BITS + FILE_NAME_SIZE_HEADER_BITS + LSB_SIZE_BITS)/8)
     if image_theoretical_max_size < (current_file_size_bytes + ((FILE_SIZE_HEADER_BITS + FILE_NAME_SIZE_HEADER_BITS + LSB_SIZE_BITS)/8)):
         print "Image to small for current selected file, try to change LSB value."
         raise ValueError('Image to small for current selected file, try to change LSB value')
@@ -295,12 +298,6 @@ def hide_file(file_name, lsb):
     global Green
     global Blue
 
-    # print dctRed
-    # print "===="
-    # print dctGreen
-    # print "===="
-    # print dctBlue
-
     print "File has "+str(len(binary)/8)+" Bytes"
     i, j = hide_metadata(len(binary), len(bin_file_name), lsb)
     i, j = write_bits(list(bin_file_name), lsb, i, j)
@@ -308,17 +305,6 @@ def hide_file(file_name, lsb):
     i, j = write_bits(binary_list, lsb, i, j)
     i, j = check_bound(i, j)
 
-
-
-
-    # print i
-    # print j
-    # print dctRed
-    # print "===="
-    # print dctGreen
-    # print "===="
-    # print dctBlue
-    #print '{0:.64f}'.format(dctBlue[5][8])
     a=get_reconstructed_image(Red)
     b=get_reconstructed_image(Green)
     c=get_reconstructed_image(Blue)
@@ -373,12 +359,6 @@ def extract_metadata():
     file_name_size = ''.join(file_name_size_bin)
     lsb = ''.join(lsb_bin)
 
-    print bin_size
-    print int(bin_size, 2)
-    print file_name_size
-    print int(file_name_size, 2)
-    print lsb
-    print int(lsb, 2)
     return i, j, int(bin_size, 2), int(file_name_size, 2), int(lsb, 2)
 
 def convert_bits_text(bits, encoding='utf-8', errors='surrogatepass'):
@@ -402,33 +382,17 @@ def extract(file_name):
     file_name_bin, i, j = read_bits(i, j, lsb, file_name_size)
     file_namef =  bin_to_utf8(''.join(file_name_bin))
     i, j = check_bound(i, j)
-    print "=============="
     file_bin, i, j = read_bits(i, j, lsb, bin_size)
     newfile = convert_bits_text(''.join(file_bin))
     #save_file("a"+file_namef, newfile)
     return newfile, file_namef
 
 
-lsbs = 1
-open_image("Hubble.jpg", lsbs)
-print "------------------"
-out = hide_file("Lenna.jpg", lsbs)
-out.save("final.png", "PNG")
-print "=============="
-newFile, file_name = extract("final.png")
-save_file("a"+file_name, newFile)
-
-
-
-#converte para binario (mas apenas mostra 32bits, e o tipo supostamente e  'numpy.float64')
-#print ''.join(bin(ord(c)).replace('0b', '').rjust(8, '0') for c in struct.pack('!f', dct[0][0]))
-#for i in range (0, dct_size):
-    #dct[i][i] = 0
-
-#print dct_size
-# Reconstructed image
-#idct = get_2d_idct(dct)
-#reconstructed_image = get_reconstructed_image(idct)
-#reconstructed_image.save("img.png")
-
-#print numpy.array(reconstructed_image, dtype=numpy.float)
+# lsbs = 1
+# open_image("Lenna.jpg", lsbs)
+# print "------------------"
+# out = hide_file("LennaS.jpg", lsbs)
+# out.save("final.png", "PNG")
+# print "=============="
+# newFile, file_name = extract("final.png")
+# save_file("a"+file_name, newFile)
