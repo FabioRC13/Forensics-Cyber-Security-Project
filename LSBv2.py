@@ -36,7 +36,9 @@ def convert_decimal_binary(value):
     return s
 
 
+
 def open_image(file_name, lsbs):
+    """open an image for inserting data or extracting data"""
     global Red
     global Green
     global Blue
@@ -71,19 +73,8 @@ def get_image_theoretical_max_available_size(LSB_size):
     return ((Red.shape[0] * Red.shape[1] * LSB_size)/8) + ((Green.shape[0] * Green.shape[1] * LSB_size)/8) \
            + ((Blue.shape[0] * Blue.shape[1] * LSB_size)/8)
 
- 
-
-# def get_2D_dct(img):
-#     """ Get 2D Cosine Transform of Image
-#     """
-#     return fftpack.dct(fftpack.dct(img.T, norm='ortho').T, norm='ortho')
-#
-# def get_2d_idct(coefficients):
-#     """ Get 2D Inverse Cosine Transform of Image
-#     """
-#     return fftpack.idct(fftpack.idct(coefficients.T, norm='ortho').T, norm='ortho')
-
 def open_file(filename):
+    """Opens a file to be hidden in the current selected image"""
     global current_file_size_bytes
     with open(filename, 'rb') as f:
         content = f.read()
@@ -108,6 +99,7 @@ def hex_to_binary(h):
 
 
 def get_reconstructed_image(raw):
+    """Converts a numpy.ndarray image type to PIL"""
     img = raw.clip(0, 255)
     img = img.astype('uint8')
     img = Image.fromarray(img)
@@ -115,7 +107,7 @@ def get_reconstructed_image(raw):
 
 def replace_last_bit(binary_coef_number, binary_number):
     return binary_coef_number[:-1] + binary_number
-    
+
 
 #converte o float64 num inteiro 
 def convert_float64_int(dct):
@@ -162,23 +154,10 @@ def add_padding(message_size_bin, padd_size):
         message_size_bin = "0" + message_size_bin
     return message_size_bin
 
-# Convert message  into bits
-def convert_message_to_binary(message):
-    result = ''
-    for c in message:
-        bits = bin(ord(c))[2:]
-        bits = '00000000'[len(bits):] + bits
-        result = result + bits
-    return result
-
-def message_sliced(data_bin_list, lsb):
-    data_aux = data_bin_list[0:lsb]
-    del data_bin_list[0:lsb]
-    if len(data_aux) != lsb:
-        raise ValueError('Bits are over')
-    return ''.join(data_aux)
-
 def write_bits(bits_list, lsb, i, j):
+    """Writes a bit list in the current selected image starting from pixel(i,j) using
+    the lsb (least significant bits) parameter to specify the number of bits to be overwritten
+     for each pixel"""
     line_size = Red.shape[0] - 1
     column_size = Red.shape[1] - 1
     last = False
@@ -225,6 +204,8 @@ def write_bits(bits_list, lsb, i, j):
     return i, j
 
 def check_bound(i, j):
+    """For the case were the writing process stops at the edge of the image"""
+
     column_size = Red.shape[1] - 1
     if(j == column_size):
         i+=1
@@ -234,6 +215,8 @@ def check_bound(i, j):
     return i, j
 
 def hide_metadata(file_size, file_name_size, lsb):
+    """Here e write in te first pixels of the image the metadata referring to the file to be hidden
+    """
     global FILE_SIZE_HEADER_BITS
     global METADATA_LSB
     global FILE_NAME_SIZE_HEADER_BITS
@@ -271,6 +254,15 @@ def hide_metadata(file_size, file_name_size, lsb):
     return i, j
 
 def hide_file(file_name, lsb):
+
+    """Process of hiding:
+        -metadata
+        -filename
+        -file binary
+    """
+    global Red
+    global Green
+    global Blue
     file_hex = open_file(file_name)
 
     global image_theoretical_max_size
@@ -281,22 +273,11 @@ def hide_file(file_name, lsb):
         raise ValueError('Image to small for current selected file, try to change LSB value')
 
     binary = hex_to_binary(file_hex)
-
-
-    #while len(binary)%lsb != 0:
-        #binary = binary+"0"
-
     binary_list = list(binary)
-
 
     bin_file_name = utf8_to_bin(file_name)
     while len(bin_file_name)%lsb != 0:
         bin_file_name =  "0"+bin_file_name
-
-
-    global Red
-    global Green
-    global Blue
 
     print "File has "+str(len(binary)/8)+" Bytes"
     i, j = hide_metadata(len(binary), len(bin_file_name), lsb)
@@ -311,6 +292,7 @@ def hide_file(file_name, lsb):
     return Image.merge("RGB", (a, b, c))
 
 def read_bits(i, j, lsb, bits_size):
+    """Reads bits starting in pixel(i,j) up to bits_size"""
     result = list()
     line_size = Red.shape[0] - 1
     column_size = Red.shape[1] - 1
@@ -347,7 +329,7 @@ def read_bits(i, j, lsb, bits_size):
     return result, i, j
 
 def extract_metadata():
-
+    """Process responsible for reading metadata from an image"""
     file_size_bin, i, j = read_bits(0, 0, METADATA_LSB, FILE_SIZE_HEADER_BITS)
     i, j = check_bound(i, j)
     file_name_size_bin, i, j = read_bits(i, j, METADATA_LSB, FILE_NAME_SIZE_HEADER_BITS)
@@ -374,6 +356,11 @@ def save_file(filename, fileContent):
     file.close()
 
 def extract(file_name):
+    """Process responsible for reading:
+        -Metadata
+        -Filename
+        -FileBinary
+    """
     global Red
     global Green
     global Blue
@@ -386,7 +373,6 @@ def extract(file_name):
     newfile = convert_bits_text(''.join(file_bin))
     #save_file("a"+file_namef, newfile)
     return newfile, file_namef
-
 
 # lsbs = 1
 # open_image("Lenna.jpg", lsbs)
