@@ -7,7 +7,7 @@ import tkFileDialog
 import tkMessageBox
 import numpy as np
 from PIL import Image, ImageTk
-import DCT
+import LSBv2
 
 current_full_size_image = None
 current_recoverd_file = None
@@ -34,7 +34,7 @@ def onOpen():
         img = Image.open(filename)
         setImage(img,1)
         lsb = setQuality()
-        DCT.open_image(filename,lsb)
+        LSBv2.open_image(filename,lsb)
         onSpinboxChanged()
 
 
@@ -94,7 +94,7 @@ def hide_procedure():
     lsb = setQuality()
 
     try:
-        hide_img = DCT.hide_file(filename, int(lsb))
+        hide_img = LSBv2.hide_file(filename, int(lsb))
     except ValueError as e:
         dialog_box(e)
         return
@@ -106,11 +106,11 @@ def hide_procedure():
 def extract_message():
     global filename
     try:
-        newFile, file_name = DCT.extract(filename)
+        newFile, file_name = LSBv2.extract(filename)
         fileName = tkFileDialog.asksaveasfile(parent=master, initialfile=file_name, title="Save the image as...", mode='w')
         #print fileName.name
         if fileName != None:
-            DCT.save_file(fileName.name, newFile)
+            LSBv2.save_file(fileName.name, newFile)
     except:
         dialog_box("Invalid file selected")
         return
@@ -139,7 +139,7 @@ def onSpinboxChanged(event = None):
     quality_value = sb.get()
     lsb = setQuality()
     try:
-        e1.insert(0,"Available size = " + str(DCT.get_image_theoretical_max_available_size(lsb)/1024.0) + " KBytes")
+        e1.insert(0,"Available size = " + str(LSBv2.get_image_theoretical_max_available_size(lsb)/1024.0) + " KBytes")
     except:
         pass
 
